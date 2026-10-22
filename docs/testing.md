@@ -41,12 +41,19 @@ Additional checks verify an existing local SSH key file path and literal apostro
 
 Self-review covered emitted flags, preset precedence, stale source-specific values, native DB meaning, reserved/duplicate ports, shell/config quoting, URL credential rejection, pre-parser reserved action values, secret templates, persistence allowlist and deployment permissions. No independent reviewer was used because delegation was not authorized. Container impact: no site Docker images/build inputs; downloaded upstream files were not modified. No full deployment was attempted.
 
-GitHub Actions dependencies are pinned to exact official revision SHAs resolved during implementation. This verifies the references, not a completed remote workflow run.
+GitHub Actions dependencies are pinned to exact official revision SHAs resolved during implementation.
+
+## GitHub publication
+
+On 2026-10-22 the user authorized committing, pushing and enabling Pages for [shellharbor/laraship-docs](https://github.com/shellharbor/laraship-docs). Initial source commit: `2110bdbfc37ef76c5c49593bee6ed0401453880d`.
+
+The `check` job in [the first workflow run](https://github.com/shellharbor/laraship-docs/actions/runs/39796257837) completed successfully on GitHub-hosted Ubuntu: lockfile installation, lint, unit tests, pinned upstream dry-run tests, Playwright desktop/mobile tests, production Pages-path smoke, production build, browser report and Pages artifact upload. The downloaded Pages artifact was independently inspected: canonical URL and asset paths target `https://shellharbor.github.io/laraship-docs/` and `/laraship-docs/`.
+
+Pages is configured with `build_type=workflow`, HTTPS enforced and deployment permitted from `main`. At this verification checkpoint, the `deploy` job was queued without a runner or a pending manual approval, and the public URL returned HTTP 404. GitHub simultaneously reported an [Actions results incident](https://www.githubstatus.com/) beginning at 14:18 UTC on 2026-10-22. The observed delay coincides with that incident; the API did not report a deployment configuration error. Configuration and successful checks are not proof of a live site. Follow the latest run under [Actions](https://github.com/shellharbor/laraship-docs/actions) for the publication result.
 
 Remaining release verification:
 
-- Create/connect an independently authorized GitHub repository and run its workflow. The current folder was not a Git checkout. There are no commits, pushes or remote writes from this task.
-- Enable Pages, wait for a successful real deployment, then smoke-test the returned HTTPS URL and optional custom domain/DNS. A local project-path check does not establish publication.
+- Wait for the queued Pages deployment to complete and smoke-test its returned HTTPS URL. No custom domain was requested. A local project-path check does not establish publication.
 - Real Ubuntu provisioning, Docker services, DNS/ACME, remote SSH/Git permissions and native DB connectivity are outside this static generator test scope.
 - The HTTPS endpoint adapter is checked by local validation and browser consent tests. No real endpoint or project credentials were contacted/sent.
 - Browser coverage uses Chromium with desktop/mobile viewport emulation; Safari, Firefox and screen-reader sessions remain unverified.

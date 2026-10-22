@@ -8,4 +8,4 @@
 - Audited and pinned LaraShip 1.2.2 at a60817564e2e9efe018bbcaee9f8ba1173464ff6; documented the complete CLI registry and source discrepancies.
 - Added unit/upstream differential/browser/accessibility/Pages-base tests and a GitHub Actions Pages workflow with conditional custom-domain metadata.
 - Documented development, release steps, remaining verification boundaries, project decisions and continuity pointers. Upstream LaraShip application files remain unchanged.
-- Prepared the independent shellharbor/laraship-docs repository for its initial source publication and GitHub Actions Pages deployment.
+- Published the initial site source to shellharbor/laraship-docs and enabled GitHub Actions Pages with HTTPS and main-branch deployment. The first remote check job passed; live deployment verification is tracked separately in the verification report.
