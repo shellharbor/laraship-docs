@@ -77,4 +77,4 @@ Only the deployment job receives `pages: write` and `id-token: write`; checks us
 
 For a local project-path build, set `BASE_PATH=/your-repository/` and `SITE_URL=https://your-verified-host/your-repository` before `npm run build`. For a custom-domain build use `BASE_PATH=/`.
 
-The expected standard Pages URL is `https://shellharbor.github.io/laraship-docs/`. Publication is verified separately from local builds; see the verification report for the actual deployment result. Real server provisioning remains outside this website's release checks.
+The published site is [shellharbor.github.io/laraship-docs](https://shellharbor.github.io/laraship-docs/). The public HTTPS URL and the complete wizard journey were verified on desktop and mobile on 2026-10-22; see the verification report. Pushes to main automatically run checks and publish the site. Real server provisioning remains outside this website's release checks.

@@ -49,11 +49,13 @@ On 2026-10-22 the user authorized committing, pushing and enabling Pages for [sh
 
 The `check` job in [the first workflow run](https://github.com/shellharbor/laraship-docs/actions/runs/39796257837) completed successfully on GitHub-hosted Ubuntu: lockfile installation, lint, unit tests, pinned upstream dry-run tests, Playwright desktop/mobile tests, production Pages-path smoke, production build, browser report and Pages artifact upload. The downloaded Pages artifact was independently inspected: canonical URL and asset paths target `https://shellharbor.github.io/laraship-docs/` and `/laraship-docs/`.
 
-Pages is configured with `build_type=workflow`, HTTPS enforced and deployment permitted from `main`. At this verification checkpoint, the `deploy` job was queued without a runner or a pending manual approval, and the public URL returned HTTP 404. GitHub simultaneously reported an [Actions results incident](https://www.githubstatus.com/) beginning at 14:18 UTC on 2026-10-22. The observed delay coincides with that incident; the API did not report a deployment configuration error. Configuration and successful checks are not proof of a live site. Follow the latest run under [Actions](https://github.com/shellharbor/laraship-docs/actions) for the publication result.
+Pages is configured with `build_type=workflow`, HTTPS enforced and deployment permitted from `main`. Initial publication was delayed while GitHub reported an [Actions results incident](https://www.githubstatus.com/) beginning at 14:18 UTC on 2026-10-22. The Deploy Pages step subsequently completed successfully; overall run/status reporting continued to lag.
+
+Hosted smoke verification began at 14:44 UTC (17:44 Moscow) on 2026-10-22 against [the live site](https://shellharbor.github.io/laraship-docs/): HTTP 200, correct page title, complete minimal PostgreSQL Docker wizard journey, expected generated slug/DB arguments, page refresh, English/Russian switching, no horizontal overflow and no persisted form data. Desktop 1440×1000 and mobile 390×844 both passed with zero page errors or HTTP error responses. Local evidence is in ignored test-results/published-smoke.json and published desktop/mobile screenshots. Subsequent publication documentation commits do not change application assets; their automatic workflow runs remain visible under [Actions](https://github.com/shellharbor/laraship-docs/actions).
 
 Remaining release verification:
 
-- Wait for the queued Pages deployment to complete and smoke-test its returned HTTPS URL. No custom domain was requested. A local project-path check does not establish publication.
+- No custom domain was requested; DNS/custom-domain verification does not apply to this standard github.io publication.
 - Real Ubuntu provisioning, Docker services, DNS/ACME, remote SSH/Git permissions and native DB connectivity are outside this static generator test scope.
 - The HTTPS endpoint adapter is checked by local validation and browser consent tests. No real endpoint or project credentials were contacted/sent.
 - Browser coverage uses Chromium with desktop/mobile viewport emulation; Safari, Firefox and screen-reader sessions remain unverified.
