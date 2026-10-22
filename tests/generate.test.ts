@@ -47,23 +47,23 @@ describe('supported scenarios', () => {
 });
 describe('effective configuration', () => {
   it('preserves API uploads and permits an explicit override', () => {
-    expect(effectiveConfig(scenario({ preset: 'api' })).phpUploadMax).toBe('16M');
-    expect(effectiveConfig(scenario({ preset: 'api', phpUploadMax: '1G' })).phpUploadMax).toBe('1G');
-    expect(generate(scenario({ preset: 'api' })).argv).not.toContain('--php-upload-max');
+    expect(effectiveConfig(scenario({ presets: ['api'] })).phpUploadMax).toBe('16M');
+    expect(effectiveConfig(scenario({ presets: ['api'], phpUploadMax: '1G' })).phpUploadMax).toBe('1G');
+    expect(generate(scenario({ presets: ['api'] })).argv).not.toContain('--php-upload-max');
   });
   it('locks additive preset and dependency features', () => {
-    expect(effectiveConfig(scenario({ preset: 'staging', basicAuth: false })).basicAuth).toBe(true);
-    expect(moduleLock(scenario({ preset: 'admin-panel' }), 'queue')).toBe('preset');
+    expect(effectiveConfig(scenario({ presets: ['staging'], basicAuth: false })).basicAuth).toBe(true);
+    expect(moduleLock(scenario({ presets: ['admin-panel'] }), 'queue')).toBe('preset');
     expect(moduleLock(scenario({ modules: ['horizon'] }), 'redis')).toBe('dependency');
     expect(moduleLock(scenario({ modules: ['queue'] }), 'horizon')).toBe('conflict');
   });
   it('switching to Existing removes incompatible selections', () => {
-    const config = changeSource(scenario({ preset: 'api', modules: ['filament', 'backup'] }), 'existing');
-    expect(config.preset).toBe('none'); expect(config.modules).toEqual(['backup']);
+    const config = changeSource(scenario({ presets: ['api'], modules: ['filament', 'backup'] }), 'existing');
+    expect(config.presets).toEqual([]); expect(config.modules).toEqual(['backup']);
   });
   it.each(Object.keys(PRESETS))('does not silently remove modules from %s', preset => {
     const p = preset as keyof typeof PRESETS;
-    expect(effectiveConfig(scenario({ preset: p })).modules).toEqual(expect.arrayContaining(PRESETS[p].modules));
+    expect(effectiveConfig(scenario({ presets: [p] })).modules).toEqual(expect.arrayContaining(PRESETS[p].modules));
   });
 });
 describe('validation', () => {
@@ -71,8 +71,8 @@ describe('validation', () => {
     [{ slug: 'NGINXPROXY' }, 'slug'], [{ slug: 'bad slug' }, 'slug'], [{ domain: 'https://app.test' }, 'domain'],
     [{ domain: 'bad..test' }, 'domain'], [{ domain: '127.0.0.1' }, 'domain'], [{ domain: '-bad.test' }, 'domain'],
     [{ sslEmail: '' }, 'email'], [{ modules: ['filament'] }, 'email'],
-    [{ preset: 'admin-panel', filamentEmail: 'admin@example.com', modules: ['horizon'] }, 'queue-horizon'],
-    [{ source: 'existing', repo: 'https://github.com/acme/app', preset: 'api' }, 'existing-modules'],
+    [{ presets: ['admin-panel'], filamentEmail: 'admin@example.com', modules: ['horizon'] }, 'queue-horizon'],
+    [{ source: 'existing', repo: 'https://github.com/acme/app', presets: ['api'] }, 'existing-modules'],
     [{ source: 'existing', repo: 'https://token@github.com/acme/app' }, 'repo'],
     [{ source: 'existing', repo: 'https://github.com/acme/app', deployKey: '/root/key' }, 'deploy-key'],
     [{ source: 'existing', repo: 'git@github.com:acme/app', deployKey: 'relative/key' }, 'deploy-key'],

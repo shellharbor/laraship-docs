@@ -11,7 +11,7 @@ The complete typed flag registry is [`CLI_OPTION_MAP`](../src/data/upstream.ts).
 | User question | Contract |
 | --- | --- |
 | New or existing application? | New uses Laravel ^13.0 by default; wizard also offers ^12.0. Existing uses HTTPS/SSH/SCP repo, optional branch and SSH server key path. Existing cannot install Filament/Horizon or set Laravel version. |
-| Which preset? | One preset supported. `admin-panel`: Filament, Redis, queue. `api`: Horizon, automatically Redis, PHP 16M. `staging`: Basic Auth, Redis. Modules and true booleans are additive. Preset selections remain locked; explicit upload overrides are allowed. |
+| Which presets? | Multiple compatible presets. `admin-panel`: Filament, Redis, queue. `api`: Horizon, automatically Redis, PHP 16M. `staging`: Basic Auth, Redis. admin-panel+staging and api+staging are supported; admin-panel+api is blocked because Queue/Horizon conflict. Modules/auth are additive; explicit upload overrides win. Preset-required features stay locked until the relevant preset is unchecked. |
 | What address? | Explicit slug required; format matches CLI, reserved nginxproxy rejected case-insensitively. CLI domain validation only checks allowed characters; wizard deliberately requires a valid multi-label DNS hostname and rejects IP literals. Auto-slug is omitted because CLI prepends it to the domain. |
 | Where is the database? | PostgreSQL 17 or MySQL 8.4, container or already running on the same server. Native is not remote/cloud. Native port sets Laravel DB_PORT; database provisioning still uses the host's normal local client connection. |
 | Custom database identity? | Names/users: `[A-Za-z0-9_][A-Za-z0-9_-]*`. PostgreSQL both max 63; MySQL name 64/user 32. Container MySQL app user cannot be `root` (native CLI permits it). |
@@ -33,6 +33,14 @@ The complete typed flag registry is [`CLI_OPTION_MAP`](../src/data/upstream.ts).
 - Redis module wires Laravel to an already present Redis service; it is not the switch that creates that container.
 - DH parameters affect project nginx, not the shared TLS proxy. Horizon requires a production authorization gate.
 - Upstream pre-parses `--config`, `--preset`, `--dry-run` and its early exit actions without respecting argument value positions. The wizard rejects those exact strings as free-text values; quoting alone cannot fix this parser behavior.
+
+## Multiple-preset contract
+
+Source `main` handles every `--preset NAME` in order; `read_config_file` also loads every `PRESET=NAME` line. The wizard emits repeated flags/keys rather than a comma-separated preset value. Selection is a deduplicated array in registry order: admin-panel, api, staging. Current compatible combinations have no competing scalar defaults; the effective merge uses the last nonempty preset upload value in registry order, then the user's explicit override. Modules and enabled booleans remain additive.
+
+`presetBlock` considers both selected presets and manual modules. Queue worker and Horizon cannot coexist; new-only presets are unavailable for existing repositories. Selected checkboxes stay removable. `togglePreset` guards selection even when called outside the control, and `validate` independently rejects conflicting/source-incompatible preset sets at step 0 before generating Bash or Docker commands. Unknown names are rejected. Switching source to Existing retains staging and removes only new-only presets/modules.
+
+Preferences retain the v1 storage key. A valid legacy single `preset` becomes an array; a new array takes precedence, including an empty array. Restoration filters unknown/duplicate names, then accepts a compatible subset in registry order after manual services/source are restored. A malformed admin-panel/api combination keeps the first allowed preset, with staging retained if present. No new identity fields enter persistence. Clearing presets does not erase separately chosen services.
 
 ## Installation and verification boundary
 

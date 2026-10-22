@@ -29,12 +29,20 @@ Production files are in `dist/`. No Docker image is required or supplied by this
 - New Laravel ^13.0/^12.0 or an existing HTTPS/SSH Git repository.
 - PostgreSQL 17 or MySQL 8.4, in Docker or native on the same Ubuntu host.
 - HTTPS by default; optional HTTP, Filament, Redis integration, queue worker, Horizon and database backups.
-- Additive admin-panel/api/staging presets; automatic dependencies and blocked conflicts.
+- Multiple compatible admin-panel/api/staging presets; automatic dependencies and explained conflict blocks.
 - Advanced names/users, host ports, Basic Auth user, PHP upload limits, project ZIP, project DH parameters, HTTPS endpoint and an explicitly acknowledged Expert hook.
 - Deterministic quoted deploy/dry-run commands and a local `deploy.config` download.
 - Visible English/Russian installation guide and a shared Bash/Docker CLI runner choice. Runner choice is held in memory only.
 
 The Redis container belongs to LaraShip's base stack; its module configures Laravel cache/session/queue integration. The scheduled database backup module is distinct from a one-time project ZIP.
+
+### Combine presets
+
+Select presets independently in **Start with a preset**. `admin-panel + staging` combines the admin panel/queue stack with Basic Auth; `api + staging` combines Horizon/16M uploads with Basic Auth. `admin-panel + api` is blocked because Queue worker and Horizon conflict. Existing repositories allow staging; presets that install Filament/Horizon require a new application. Already selected manual queue services also block conflicting presets, with visible recovery instructions.
+
+Unchecking a preset removes its contributions while preserving manual service choices. **No presets** clears the selected presets. Included modules and staging's Basic Auth stay locked while a selected preset requires them. Switching to an existing repository removes new-app-only presets and retains staging.
+
+Commands repeat `--preset NAME`, and config exports repeat `PRESET="NAME"` on separate lines. Both use stable registry order (admin-panel, api, staging), independent of click order. Modules/auth combine additively; an explicit PHP upload override wins. Optional saved preferences migrate the old single `preset` value to a `presets` array under the existing storage key. Unknown, duplicate, source-incompatible and conflicting saved preset choices are filtered; manually selected services take priority during restoration. Identity and other private fields remain excluded.
 
 ## Install LaraShip on the target server
 

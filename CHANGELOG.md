@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added multiple compatible preset selection with visible, accessible explanations for Queue/Horizon and existing-application restrictions. Compatible presets combine modules, Basic Auth and upload defaults; deselection preserves manual service choices.
+- Added repeated --preset flags and PRESET config entries in stable order for both Bash and Docker, step-0 validation, legacy saved-preference migration and safe restoration of compatible preset sets.
+- Expanded domain, real Bash/Docker dry-run and desktop/mobile tests for combined presets, conflicts, keyboard selection, source changes, exported configs and saved preferences.
 - Added a visible LaraShip installation guide before the wizard: Ubuntu prerequisites, complete Bash toolkit checkout, official Docker Engine setup link, pinned CLI image pull/inspection and deployment-directory preparation, in English and Russian.
 - Added Bash/Docker CLI runner selection with matching deploy, dry-run, config and management commands. Docker uses the verified immutable 1.2.2 image, server mounts and readonly config/key binds; native databases explicitly require Bash. Corrected the Docker project ZIP location.
 - Added Docker command contract and opt-in published-image tests plus desktop/mobile installation, runner, native fallback, export and accessibility checks. Browser screenshots use CSS pixel scale for the longer guide.

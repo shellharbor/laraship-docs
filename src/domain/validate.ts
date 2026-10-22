@@ -1,4 +1,5 @@
-import { effectiveConfig } from './constraints';
+import { effectiveConfig, presetDefaults } from './constraints';
+import { PRESET_NAMES } from '../data/upstream';
 import type { Issue, WizardConfig } from './wizardSchema';
 
 export const isSshRepo = (repo: string) => /^ssh:\/\//.test(repo) || /^[A-Za-z0-9._-]+@[A-Za-z0-9.-]+:.+/.test(repo);
@@ -16,6 +17,10 @@ export function validate(config: WizardConfig): Issue[] {
   const e = effectiveConfig(config);
   const issues: Issue[] = [];
   const add = (field: string, code: string, message: string, step: number) => issues.push({ field, code, message, step });
+  if (config.presets.some(preset => !PRESET_NAMES.includes(preset))) add('presets', 'presets', 'Choose only the available presets.', 0);
+  const presetModules = presetDefaults(config.presets).modules;
+  if (presetModules.includes('queue') && presetModules.includes('horizon')) add('presets', 'preset-conflict', 'admin-panel and api cannot be combined: Queue worker conflicts with Horizon.', 0);
+  if (e.source === 'existing' && presetModules.some(module => module === 'filament' || module === 'horizon')) add('presets', 'preset-source', 'admin-panel and api require a new application. Keep staging or use no presets for an existing repository.', 0);
   // Reject controls even in currently inactive values; nothing may create extra config lines.
   const strings: [string, string, number][] = [
     ['repo', e.repo, 0], ['branch', e.branch, 0], ['deployKey', e.deployKey, 0], ['slug', e.slug, 1],

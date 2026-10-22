@@ -22,11 +22,11 @@ export const CLI_IMAGE = {
 
 // presets/*.conf and modules/horizon.sh at UPSTREAM.commit.
 export const PRESETS: Record<PresetName, { modules: ModuleName[]; basicAuth: boolean; upload: string; description: string }> = {
-  none: { modules: [], basicAuth: false, upload: '', description: 'Start with a clean Laravel deployment.' },
   'admin-panel': { modules: ['filament', 'redis', 'queue'], basicAuth: false, upload: '', description: 'Filament admin panel + Redis integration + queue worker. Loopback project ports.' },
   api: { modules: ['horizon', 'redis'], basicAuth: false, upload: '16M', description: 'Horizon + Redis integration + 16M PHP uploads. Loopback project ports.' },
   staging: { modules: ['redis'], basicAuth: true, upload: '', description: 'HTTP Basic Auth + Redis integration. Loopback project ports.' },
 };
+export const PRESET_NAMES = Object.keys(PRESETS) as PresetName[];
 export const MODULES: ModuleName[] = ['filament', 'redis', 'queue', 'horizon', 'backup'];
 export interface CliOption {
   flag: string; type: 'value' | 'boolean' | 'action'; values: string; default: string;
@@ -43,7 +43,7 @@ export const CLI_OPTION_MAP: CliOption[] = [
   option('--domain', 'value', 'CLI: ^[A-Za-z0-9.-]+$; wizard: DNS hostname', 'required', 'basic', 'All deployments', 'Final DNS hostname'),
   option('--db-type', 'value', 'postgres | mysql', 'CLI: required; wizard: postgres', 'basic', 'All deployments', 'Database engine'),
   option('--laravel-version', 'value', 'X.Y >= 12.0; wizard: 12.0 | 13.0', '13.0', 'basic', 'New only', 'Laravel skeleton constraint ^X.Y'),
-  option('--preset', 'value', 'admin-panel | api | staging', 'none', 'basic', 'Additive; wizard supports one; api/admin-panel require New', 'Preset before config before CLI', 'presets/README.md'),
+  option('--preset', 'value', 'admin-panel | api | staging (repeatable)', 'none', 'basic', 'Compatible combinations; api/admin-panel require New; queue conflicts with Horizon', 'Presets before config before CLI; emitted in registry order', 'presets/README.md'),
   option('--with', 'value', 'filament,redis,queue,horizon,backup', 'none', 'basic', 'Horizon requires Redis; no queue + Horizon; no Filament/Horizon + repo', 'Additive module list', 'modules/README.md'),
   option('--repo', 'value', 'CLI: http(s), ssh, git, file, SCP; wizard: HTTPS/SSH/SCP only', 'none', 'basic', 'No embedded credentials, Laravel version, Filament or Horizon', 'Existing Laravel application'),
   option('--branch', 'value', '^[A-Za-z0-9][A-Za-z0-9._/-]*$', 'repository default', 'advanced', 'Repo', 'Git branch'),

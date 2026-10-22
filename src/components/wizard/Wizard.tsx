@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { MODULES, PRESETS, UPSTREAM } from '../../data/upstream';
-import { changeSource, effectiveConfig, moduleLock, warnings } from '../../domain/constraints';
+import { MODULES, UPSTREAM } from '../../data/upstream';
+import { changeSource, effectiveConfig, moduleLock, presetDefaults, togglePreset, warnings } from '../../domain/constraints';
 import { validate } from '../../domain/validate';
 import { initialConfig, type WizardConfig } from '../../domain/wizardSchema';
 import { preferences, readPreferences, STORAGE_KEY } from '../../domain/preferences';
@@ -8,6 +8,7 @@ import { localizeIssues, translator, type Language, warningText } from '../../i1
 import { Icon } from '../Icon';
 import { Choice, Field, Toggle } from './Fields';
 import { Results } from './Results';
+import { PresetPicker } from './PresetPicker';
 import { resolveRunner, type Runner } from '../../domain/runner';
 
 export function Wizard({ language, runner, onRunnerChange }: { language: Language; runner: Runner; onRunnerChange: (runner: Runner) => void }) {
@@ -64,7 +65,7 @@ export function Wizard({ language, runner, onRunnerChange }: { language: Languag
     backup: t('Daily database dumps with a retention policy.', 'Ежедневные дампы БД с периодом хранения.'),
   };
   const lockText = {
-    preset: t('Included by preset. Change the preset to remove it.', 'Включено пресетом. Для отключения смените пресет.'),
+    preset: t('Included by your presets. Uncheck the preset to remove it.', 'Включено пресетами. Для отключения снимите нужный пресет.'),
     dependency: t('Required by Horizon.', 'Требуется Horizon.'),
     conflict: t('Remove the other queue service or its preset first.', 'Сначала отключите другой сервис очередей или его пресет.'),
     source: t('Managed by the existing application.', 'Управляется существующим приложением.'),
@@ -89,8 +90,7 @@ export function Wizard({ language, runner, onRunnerChange }: { language: Languag
               <Field label={t('Branch (optional)', 'Ветка (необязательно)')} field="branch" value={config.branch} onChange={v => update('branch', v)} placeholder="main" issues={shownIssues}/>
               {advanced && <Field label={t('SSH deploy key path on server', 'Путь к SSH deploy key на сервере')} field="deployKey" value={config.deployKey} onChange={v => update('deployKey', v)} placeholder="/root/.ssh/app_deploy_key" issues={shownIssues} hint={t('SSH repositories only. A file path, never the key itself.', 'Только SSH. Укажите путь, а не содержимое ключа.')}/>}<div className="notice">{t(...warningText.existing)}</div>
             </>}
-            <fieldset className="presets"><legend>{t('Start with a preset', 'Начните с пресета')} <span>{t('optional', 'необязательно')}</span></legend><div className="preset-grid">{(Object.keys(PRESETS) as WizardConfig['preset'][]).map(preset => <label key={preset} className={config.preset === preset ? 'active' : ''}><input type="radio" name="preset" value={preset} checked={config.preset === preset} disabled={config.source === 'existing' && ['api', 'admin-panel'].includes(preset)} onChange={() => update('preset', preset)}/><strong>{preset === 'none' ? t('No preset', 'Без пресета') : preset}</strong><small>{preset === 'none' ? t('Just the essentials', 'Только основное') : preset === 'admin-panel' ? 'Filament · Redis · Queue' : preset === 'api' ? 'Horizon · Redis · 16M' : 'Basic Auth · Redis'}</small></label>)}</div>
-              <p className="hint">{t('Preset features are additive and stay enabled until you change the preset. All project ports bind to loopback.', 'Опции пресета добавляются и остаются включёнными до его смены. Порты проекта слушают loopback.')}</p></fieldset>
+            <PresetPicker config={config} language={language} onToggle={preset => setConfig(previous => togglePreset(previous, preset))} onClear={() => update('presets', [])}/>
           </>}
           {step === 1 && <><Field label={t('Project slug', 'Имя проекта (slug)')} field="slug" value={config.slug} onChange={v => update('slug', v)} placeholder="my-app" issues={shownIssues} hint={t('Becomes /var/www/<slug> and your container prefix. Lowercase recommended.', 'Используется в /var/www/<slug> и именах контейнеров. Рекомендуем нижний регистр.')}/>
             <Field label={t('Domain', 'Домен')} field="domain" value={config.domain} onChange={v => update('domain', v)} placeholder="app.example.com" issues={shownIssues}/>
@@ -112,7 +112,7 @@ export function Wizard({ language, runner, onRunnerChange }: { language: Languag
             {e.modules.includes('backup') && <Field label={t('Keep database dumps for (days)', 'Хранить дампы БД (дней)')} field="backupKeep" type="number" value={config.backupKeep} onChange={v => update('backupKeep', v)} hint={t('1–3650 days. Default: 7. Dumps run at startup and daily.', '1–3650 дней. По умолчанию 7. Дампы при старте и ежедневно.')} issues={shownIssues}/>}
             {warnings(config).filter(key => ['queue', 'horizon'].includes(key)).map(key => <div className="notice" key={key}>{t(...warningText[key])}</div>)}
           </>}
-          {step === 4 && <><Toggle label={t('HTTP Basic Auth', 'HTTP Basic Auth')} checked={e.basicAuth} onChange={v => update('basicAuth', v)} disabled={PRESETS[config.preset].basicAuth} hint={PRESETS[config.preset].basicAuth ? t('Included by staging. Change the preset to disable.', 'Включено staging. Для отключения смените пресет.') : t('An extra access barrier for staging. Credentials generated on the server.', 'Дополнительный барьер для staging. Учётные данные создаются на сервере.')}/>
+          {step === 4 && <><Toggle label={t('HTTP Basic Auth', 'HTTP Basic Auth')} checked={e.basicAuth} onChange={v => update('basicAuth', v)} disabled={presetDefaults(config.presets).basicAuth} hint={presetDefaults(config.presets).basicAuth ? t('Included by staging. Uncheck staging to disable.', 'Включено staging. Для отключения снимите staging.') : t('An extra access barrier for staging. Credentials generated on the server.', 'Дополнительный барьер для staging. Учётные данные создаются на сервере.')}/>
             <div className="field"><label htmlFor="upload-max">{t('PHP upload limit', 'Лимит загрузки PHP')}</label><input list="upload-sizes" id="upload-max" value={config.phpUploadMax} placeholder={e.phpUploadMax || t('Keep PHP defaults (2M/8M)', 'Оставить PHP defaults (2M/8M)')} onChange={event => update('phpUploadMax', event.target.value)} aria-invalid={shownIssues.some(i => i.field === 'phpUploadMax')}/><datalist id="upload-sizes">{['16M', '64M', '128M', '256M', '1G'].map(size => <option key={size} value={size}/>)}</datalist><p className="hint">{t('Optional. Choose a suggestion or enter a size such as 512M. API preset: 16M.', 'Необязательно. Выберите вариант или введите размер, например 512M. Пресет API: 16M.')}</p></div>
             {advanced && <div className="advanced-box"><span className="badge">ADVANCED</span>
               {e.basicAuth && <Field label={t('Basic Auth user (optional)', 'Логин Basic Auth (необязательно)')} field="authUser" value={config.authUser} onChange={v => update('authUser', v)} issues={shownIssues}/>}
@@ -129,7 +129,7 @@ export function Wizard({ language, runner, onRunnerChange }: { language: Languag
         </form>}
         {step === 5 && <Results config={config} language={language} onEdit={go} onReset={reset} runner={runner} onRunnerChange={onRunnerChange}/>}
       </div>
-      <aside className="recap"><span className="eyebrow">{t('YOUR DEPLOYMENT', 'ВАШЕ РАЗВЁРТЫВАНИЕ')}</span><div className="recap-icon"><Icon name="ship" size={30}/></div><h4>{config.slug || t('Something great.', 'Ваш будущий проект.')}</h4><p className="domain-preview">{config.domain || 'your-app.example.com'}</p><dl><div><dt>{t('Application', 'Приложение')}</dt><dd>{config.source === 'new' ? `Laravel ${config.laravelVersion}` : t('Git repository', 'Git-репозиторий')}</dd></div><div><dt>{t('Database', 'База данных')}</dt><dd>{config.dbType === 'postgres' ? 'PostgreSQL' : 'MySQL'}<small>{config.dbLocation === 'docker' ? 'Docker' : t('Native on host', 'На хосте')}</small></dd></div><div><dt>HTTPS</dt><dd className={config.https ? 'green' : ''}>{config.https ? t('Enabled', 'Включён') : t('Disabled', 'Выключен')}</dd></div><div><dt>{t('Preset', 'Пресет')}</dt><dd>{config.preset === 'none' ? '—' : config.preset}</dd></div></dl><div className="recap-modules"><span className="eyebrow">{t('MODULES', 'МОДУЛИ')}</span><div>{e.modules.length ? e.modules.map(module => <span className="module-tag" key={module}>{module}</span>) : <p>{t('The essentials, for now.', 'Пока только основное.')}</p>}</div></div><div className="recap-footer"><span className="dot"/>{t('Compatible with', 'Совместимо с')} v{UPSTREAM.version}</div></aside>
+      <aside className="recap"><span className="eyebrow">{t('YOUR DEPLOYMENT', 'ВАШЕ РАЗВЁРТЫВАНИЕ')}</span><div className="recap-icon"><Icon name="ship" size={30}/></div><h4>{config.slug || t('Something great.', 'Ваш будущий проект.')}</h4><p className="domain-preview">{config.domain || 'your-app.example.com'}</p><dl><div><dt>{t('Application', 'Приложение')}</dt><dd>{config.source === 'new' ? `Laravel ${config.laravelVersion}` : t('Git repository', 'Git-репозиторий')}</dd></div><div><dt>{t('Database', 'База данных')}</dt><dd>{config.dbType === 'postgres' ? 'PostgreSQL' : 'MySQL'}<small>{config.dbLocation === 'docker' ? 'Docker' : t('Native on host', 'На хосте')}</small></dd></div><div><dt>HTTPS</dt><dd className={config.https ? 'green' : ''}>{config.https ? t('Enabled', 'Включён') : t('Disabled', 'Выключен')}</dd></div><div><dt>{t('Presets', 'Пресеты')}</dt><dd>{config.presets.join(', ') || '—'}</dd></div></dl><div className="recap-modules"><span className="eyebrow">{t('MODULES', 'МОДУЛИ')}</span><div>{e.modules.length ? e.modules.map(module => <span className="module-tag" key={module}>{module}</span>) : <p>{t('The essentials, for now.', 'Пока только основное.')}</p>}</div></div><div className="recap-footer"><span className="dot"/>{t('Compatible with', 'Совместимо с')} v{UPSTREAM.version}</div></aside>
     </div>
     <div className="preferences"><Toggle label={t('Remember non-sensitive preferences on this device', 'Сохранять несекретные предпочтения на устройстве')} checked={remember} onChange={setRemember} hint={t('Only stack choices. Never emails, repository URLs, domains, key paths, endpoints or hooks.', 'Только выбор стека. Без email, URL, доменов, путей к ключам, endpoint и hooks.')}/><button className="text-button" onClick={reset}>{t('Clear data', 'Очистить данные')}</button><span className="sr-only" role="status">{storageMessage}</span></div>
   </section>;

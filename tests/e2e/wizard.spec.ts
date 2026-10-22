@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { readFile } from 'node:fs/promises';
 
 const wizard = (page: Page) => page.getByRole('region', { name: 'Deployment configurator' });
 async function checkAccessibility(page: Page) {
@@ -19,6 +20,82 @@ async function result(page: Page) {
   await expect(page.getByRole('heading', { name: 'Ready when you are.' })).toBeVisible();
 }
 test.beforeEach(async ({ page }) => { await page.goto('/'); });
+for (const primary of ['admin-panel', 'api'] as const) {
+  test(`${primary} combines with staging, blocks conflicts, and exports both presets`, async ({ page }, info) => {
+    if (primary === 'api') await page.locator('#installation').getByRole('radio', { name: 'Docker image' }).check();
+    await page.getByRole('checkbox', { name: primary, exact: true }).check();
+    const staging = page.getByRole('checkbox', { name: 'staging', exact: true });
+    await staging.focus(); await page.keyboard.press('Space');
+    await expect(staging).toBeChecked();
+    const blocked = page.getByRole('checkbox', { name: primary === 'api' ? 'admin-panel' : 'api', exact: true });
+    await expect(blocked).toBeDisabled();
+    await expect(blocked).toHaveAccessibleDescription(/Cannot combine with.*conflicts with/);
+    await checkAccessibility(page);
+    await page.locator('.presets').screenshot({ path: `test-results/${info.project.name}-${primary}-staging.png`, scale: 'css', animations: 'disabled', style: 'html { scroll-behavior: auto !important; }' });
+    await next(page); await identity(page); await next(page); await next(page);
+    if (primary === 'admin-panel') await page.getByLabel('Filament administrator email').fill('admin@example.com');
+    await expect(page.getByRole('checkbox', { name: primary === 'api' ? /^Horizon/ : 'Queue worker' })).toBeChecked();
+    await next(page);
+    await expect(page.getByRole('checkbox', { name: /^HTTP Basic Auth/ })).toBeChecked();
+    await expect(page.getByRole('checkbox', { name: /^HTTP Basic Auth/ })).toBeDisabled();
+    await page.getByRole('button', { name: 'Review configuration' }).click();
+    const command = wizard(page).locator('.code-block').filter({ hasText: `${primary === 'api' ? 'docker' : 'bash'} · deploy` });
+    await expect(command).toContainText(`--preset '${primary}'`);
+    await expect(command).toContainText("--preset 'staging'");
+    await expect(command).toContainText('--enable-basic-auth');
+    await page.getByText('Prefer a configuration file?', { exact: true }).click();
+    const download = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Download configuration' }).click();
+    const file = await (await download).path();
+    expect(await readFile(file!, 'utf8')).toContain(`PRESET="${primary}"\nPRESET="staging"`);
+    await wizard(page).getByRole('button', { name: 'Application', exact: true }).click();
+    await page.getByRole('checkbox', { name: primary, exact: true }).uncheck();
+    await expect(staging).toBeChecked();
+    await expect(blocked).toBeEnabled();
+    await page.getByRole('button', { name: /^No presets/ }).click();
+    await expect(staging).not.toBeChecked();
+    await expect(page.getByRole('button', { name: /^No presets/ })).toHaveAttribute('aria-pressed', 'true');
+  });
+}
+test('manual queue services block presets with recovery instructions', async ({ page }) => {
+  await next(page); await identity(page); await next(page); await next(page);
+  await page.getByRole('checkbox', { name: /^Horizon/ }).check();
+  await wizard(page).getByRole('button', { name: 'Application', exact: true }).click();
+  await expect(page.getByRole('checkbox', { name: 'admin-panel', exact: true })).toBeDisabled();
+  await expect(page.getByRole('checkbox', { name: 'admin-panel', exact: true })).toHaveAccessibleDescription(/Remove the selected Horizon/);
+  await page.getByRole('checkbox', { name: 'staging', exact: true }).check();
+  await wizard(page).getByRole('button', { name: 'Services', exact: true }).click();
+  await expect(page.getByRole('checkbox', { name: /^Horizon/ })).toBeChecked();
+  await page.getByRole('checkbox', { name: /^Horizon/ }).uncheck();
+  await page.getByRole('checkbox', { name: 'Queue worker' }).check();
+  await wizard(page).getByRole('button', { name: 'Application', exact: true }).click();
+  await expect(page.getByRole('checkbox', { name: 'api', exact: true })).toBeDisabled();
+  await expect(page.getByRole('checkbox', { name: 'api', exact: true })).toHaveAccessibleDescription(/Remove the selected Queue worker/);
+  await expect(page.getByRole('checkbox', { name: 'admin-panel', exact: true })).toBeEnabled();
+  await page.getByRole('button', { name: /^No presets/ }).click();
+  await wizard(page).getByRole('button', { name: 'Services', exact: true }).click();
+  await expect(page.getByRole('checkbox', { name: 'Queue worker' })).toBeChecked();
+});
+test('combined source transition, Russian reasons and legacy preferences migration', async ({ page }) => {
+  await page.evaluate(() => localStorage.setItem('laraship-preferences-v1', JSON.stringify({ preset: 'api' })));
+  await page.reload();
+  await expect(page.getByRole('checkbox', { name: 'api', exact: true })).toBeChecked();
+  await page.getByRole('checkbox', { name: 'staging', exact: true }).check();
+  await page.reload();
+  await expect(page.getByRole('checkbox', { name: 'staging', exact: true })).toBeChecked();
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('laraship-preferences-v1')!));
+  expect(saved.presets).toEqual(['api', 'staging']); expect(saved).not.toHaveProperty('preset');
+  await page.getByRole('radio', { name: 'Existing repository' }).check();
+  await expect(page.getByRole('checkbox', { name: 'staging', exact: true })).toBeChecked();
+  await expect(page.getByRole('checkbox', { name: 'api', exact: true })).not.toBeChecked();
+  await expect(page.getByRole('checkbox', { name: 'api', exact: true })).toBeDisabled();
+  await expect(page.getByRole('checkbox', { name: 'api', exact: true })).toHaveAccessibleDescription(/New applications only/);
+  await page.getByRole('button', { name: 'Switch to Russian' }).click();
+  await expect(page.getByRole('checkbox', { name: 'api', exact: true })).toHaveAccessibleDescription(/Только для нового приложения/);
+  await expect(page.locator('.preset-selection')).toContainText('Выбраны: staging');
+  await page.getByRole('button', { name: 'Очистить данные' }).click();
+  expect(await page.evaluate(() => localStorage.length)).toBe(0);
+});
 test('installation, Docker CLI commands, config mounts, language and accessibility', async ({ page }, info) => {
   const installation = page.locator('#installation');
   await expect(installation.getByRole('heading', { name: 'First, get LaraShip ready.' })).toBeVisible();
@@ -105,7 +182,7 @@ test('native MySQL is explicitly a manual template', async ({ page }) => {
   await expect(wizard(page)).toContainText("--db-root-password '<MYSQL_ROOT_PASSWORD>'");
 });
 test('presets lock additive modules and source change removes incompatible modules', async ({ page }) => {
-  await page.getByRole('radio', { name: 'admin-panel' }).check();
+  await page.getByRole('checkbox', { name: 'admin-panel', exact: true }).check();
   await next(page); await identity(page); await next(page); await next(page);
   await expect(page.getByRole('checkbox', { name: 'Filament admin' })).toBeChecked();
   await expect(page.getByRole('checkbox', { name: 'Queue worker' })).toBeDisabled();
@@ -113,7 +190,7 @@ test('presets lock additive modules and source change removes incompatible modul
   await page.getByLabel('Filament administrator email').fill('admin@example.com');
   await wizard(page).getByRole('button', { name: 'Application', exact: false }).click();
   await page.getByRole('radio', { name: 'Existing repository' }).check();
-  await expect(page.getByRole('radio', { name: 'No preset' })).toBeChecked();
+  await expect(page.getByRole('button', { name: /^No presets/ })).toHaveAttribute('aria-pressed', 'true');
   await page.getByLabel('Repository URL', { exact: true }).fill('https://token@github.com/acme/app');
   await next(page); await expect(page.getByRole('alert')).toContainText('without embedded credentials');
   await page.getByLabel('Repository URL', { exact: true }).fill('https://github.com/acme/app.git');
@@ -144,14 +221,16 @@ test('Horizon dependency, Advanced ports and consent checks', async ({ page }) =
   await expect(wizard(page)).toContainText("--with 'redis,horizon'");
 });
 test('opt-in saves only preferences and Clear data resets everything', async ({ page }) => {
-  await page.getByRole('radio', { name: 'api', exact: false }).check();
+  await page.getByRole('checkbox', { name: 'api', exact: true }).check();
+  await page.getByRole('checkbox', { name: 'staging', exact: true }).check();
   await page.getByRole('checkbox', { name: 'Remember non-sensitive preferences' }).check();
   await next(page); await identity(page);
   expect(await page.evaluate(() => JSON.stringify(localStorage))).not.toMatch(/operator|example|my-app/);
-  await page.reload(); await expect(page.getByRole('radio', { name: 'api', exact: false })).toBeChecked();
+  await page.reload(); await expect(page.getByRole('checkbox', { name: 'api', exact: true })).toBeChecked();
+  await expect(page.getByRole('checkbox', { name: 'staging', exact: true })).toBeChecked();
   await page.getByRole('button', { name: 'Clear data' }).click();
   expect(await page.evaluate(() => localStorage.length)).toBe(0);
-  await expect(page.getByRole('radio', { name: 'No preset' })).toBeChecked();
+  await expect(page.getByRole('button', { name: /^No presets/ })).toHaveAttribute('aria-pressed', 'true');
 });
 test('keyboard navigation, Russian toggle and responsive landing', async ({ page }, info) => {
   await page.keyboard.press('Tab');

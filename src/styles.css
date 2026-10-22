@@ -21,6 +21,12 @@
 .installation-links{display:flex;flex-wrap:wrap;gap:14px;margin-top:22px}
 .installation-links a,.documentation-link{font-size:12px;font-weight:600;text-decoration:underline;text-underline-offset:3px;color:#355d3c;line-height:1.8}
 .runner-picker{margin:24px 0}
+.preset-grid .preset-none{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;border:1px solid var(--line);background:white;padding:12px;border-radius:6px}
+.preset-grid .preset-none.active{border-color:#7fa36b;background:#f4f7ed}
+.preset-grid label{align-content:start;row-gap:4px}
+.preset-grid label:has(input:disabled){opacity:1;background:#f7f5ef}
+.preset-grid .preset-reason{color:#805116;font-size:10px;margin-top:6px;line-height:1.7}
+.preset-selection{font-weight:600;color:#355d3c}
 .runner-picker legend{font-size:13px}
 .runner-options{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .runner-option{display:flex;align-items:flex-start;gap:12px;padding:18px;border:1px solid var(--line);border-radius:8px;background:white;cursor:pointer;min-width:0}

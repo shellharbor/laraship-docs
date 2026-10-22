@@ -4,6 +4,9 @@ export const translator = (language: Language) => (english: string, russian: str
 export function localizeIssues(issues: Issue[], language: Language): Issue[] {
   if (language === 'en') return issues;
   const messages: Record<string, string> = {
+    presets: 'Выберите только доступные пресеты.',
+    'preset-conflict': 'admin-panel и api несовместимы: Queue worker конфликтует с Horizon.',
+    'preset-source': 'admin-panel и api требуют новое приложение. Для готового репозитория оставьте staging или отключите пресеты.',
     'single-line': 'Введите одну строку без управляющих символов.',
     'reserved-action': 'Это значение зарезервировано CLI для служебной команды. Выберите другое.',
     repo: 'Укажите HTTPS- или SSH-репозиторий без пароля, токена, query и fragment.',

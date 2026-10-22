@@ -18,7 +18,7 @@ export function generateArgv(config: WizardConfig): string[] {
   } else {
     value('--repo', e.repo); value('--branch', e.branch); value('--deploy-key', e.deployKey);
   }
-  if (e.preset !== 'none') value('--preset', e.preset);
+  for (const preset of e.presets) value('--preset', preset);
   // Include the effective modules: dependencies are explicit and the preset remains additive.
   if (e.modules.length) value('--with', e.modules.join(','));
   if (e.dbLocation === 'native') argv.push('--db-native');
