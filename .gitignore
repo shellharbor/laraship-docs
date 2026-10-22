@@ -1,0 +1,169 @@
+# BEGIN AI-KIT MANAGED
+# Application private mode: AI-KIT files and AI client configuration stay local to this checkout
+/AGENTS.md
+/AGENTS.override.md
+/CLAUDE.md
+/CLAUDE.local.md
+/GEMINI.md
+/KIMI.md
+/MANUS.md
+/CONVENTIONS.md
+/PROJECT_CONTEXT.md
+/WIKI.md
+/docs/DECISIONS.md
+/docs/adr/0000-template.md
+/ai-kit/
+/ai-kit/.memory/
+/ai-kit/.orchestration/
+/.ai-kit-install.lock
+/.agents/
+/.claude/
+/.codex/
+/.cursor/
+/.cursorrules
+/.gemini/
+/.windsurf/
+/.windsurfrules
+/.devin/
+/.clinerules
+/.roo/
+/.roorules
+/.roomodes
+/.aider.conf.yml
+/.github/copilot-instructions.md
+/.github/instructions/
+/.github/prompts/
+/.github/agents/
+# Extracted AI-KIT bundles; the hyphen keeps ai-kit/ visible on case-insensitive systems
+/AI-KIT-*/
+/ai-kit-*/
+# ---- Local secrets and credentials ----
+.env
+.env.*
+!.env.example
+!.env.*.example
+!.env.dist
+!.env.*.dist
+.envrc
+.netrc
+.pypirc
+auth.json
+/.secrets/
+/secrets/
+*.pem
+*.p12
+*.pfx
+*.private.key
+id_rsa*
+id_ed25519*
+
+# ---- OS, editor, and temporary files ----
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+*.tmp
+*.bak
+.idea/
+.vscode/
+.fleet/
+.zed/
+.nova/
+.history/
+
+# ---- AI client local history and caches ----
+.aider.chat.history.md
+.aider.input.history
+.aider.tags.cache.v*/
+
+# ---- Local output directories ----
+/build/
+/dist/
+/out/
+/tmp/
+/temp/
+
+# ---- PHP / Laravel ----
+.phpunit.cache/
+.phpunit.result.cache
+.phpactor.json
+.php-cs-fixer.cache
+Homestead.json
+Homestead.yaml
+/coverage/
+/clover.xml
+/phpunit-coverage.xml
+/bootstrap/cache/*.php
+/public/hot
+/public/storage
+/public/build/
+/public_html/hot
+/public_html/storage
+/public_html/build/
+/storage/*.key
+/storage/pail/
+/storage/logs/*
+!/storage/logs/.gitignore
+/storage/framework/cache/*
+!/storage/framework/cache/.gitignore
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitignore
+/storage/framework/views/*
+!/storage/framework/views/.gitignore
+/storage/app/public/*
+!/storage/app/public/.gitignore
+/storage/app/private/*
+!/storage/app/private/.gitignore
+/database/database.sqlite
+/database/database.sqlite-*
+
+# ---- Moodle installation (do not ignore plugin source) ----
+/moodledata/
+/behat_dataroot/
+/phpunit_dataroot/
+/moodle-plugin-ci.phar
+
+# ---- Go build, profiling, and coverage output ----
+go-cache
+.go-cache
+gocache
+.gocache
+go-build
+.go-build
+/.cache/go-build/
+/pkg/mod/
+/go/pkg/mod/
+*.exe
+*.exe~
+__debug_bin*
+*.test
+*.out
+*.prof
+*.coverprofile
+/cpu.prof
+/mem.prof
+# Keep intentional executable source in bin/; ignore actual build outputs per project.
+
+# ---- Local containers, logs, dumps, and backups ----
+/docker-compose.override.yml
+/docker-compose.override.yaml
+*.log
+*.dump
+*.sql.gz
+/dumps/
+/backups/
+
+# Deliberately track README.md, CHANGELOG.md, ordinary project docs,
+# composer.lock, go.mod, go.sum, pyproject.toml, Python lockfiles,
+# requirements files, package lockfiles, source code,
+# database migrations, and .github/workflows/.
+# Libraries may explicitly adapt their lock/artifact policy.
+# END AI-KIT MANAGED
+
+# Static site dependencies and verification artifacts
+node_modules/
+playwright-report/
+test-results/
+*.tsbuildinfo

@@ -1,0 +1,80 @@
+name: Check and deploy Pages
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - name: Obtain audited upstream for read-only dry-run tests
+        run: |
+          git clone https://github.com/shellharbor/laraship.git tmp/upstream-laraship
+          git -C tmp/upstream-laraship checkout --detach a60817564e2e9efe018bbcaee9f8ba1173464ff6
+      - run: npm run test:upstream
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - run: npm run test:pages
+      - name: Build for Pages
+        env:
+          CUSTOM_DOMAIN: ${{ vars.CUSTOM_DOMAIN }}
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: |
+          if [ -n "$CUSTOM_DOMAIN" ]; then
+            [[ "$CUSTOM_DOMAIN" =~ ^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$ ]] || exit 1
+            export BASE_PATH=/
+            export SITE_URL="https://$CUSTOM_DOMAIN"
+          else
+            REPO_NAME="${GITHUB_REPOSITORY#*/}"
+            if [ "$REPO_NAME" = "$GITHUB_REPOSITORY_OWNER.github.io" ]; then
+              export BASE_PATH=/
+            else
+              export BASE_PATH="/$REPO_NAME/"
+            fi
+            export SITE_URL="${SITE_URL:-https://$GITHUB_REPOSITORY_OWNER.github.io${BASE_PATH%/}}"
+          fi
+          npm run build
+          if [ -n "$CUSTOM_DOMAIN" ]; then printf '%s\n' "$CUSTOM_DOMAIN" > dist/CNAME; fi
+      - name: Upload browser report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: browser-test-report
+          path: |
+            playwright-report/
+            test-results/
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+        if: github.event_name != 'pull_request'
+        with:
+          path: dist
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
