@@ -4,6 +4,8 @@ export function scenario(overrides: Partial<WizardConfig> = {}): WizardConfig {
   return { ...structuredClone(initialConfig), slug: 'testapp', domain: 'app.example.com', sslEmail: 'operator@example.com', ...overrides };
 }
 export const scenarios: [string, Partial<WizardConfig>, string[]][] = [
+  ['completion API without passwords', { completionEnabled: true, completionEndpoint: 'https://api.example.com/deployments/completed', completionEndpointConsent: true }, ['Completion:   configured (not executed during dry run)']],
+  ['completion API explicit passwords and timeout', { completionEnabled: true, completionEndpoint: 'https://api.example.com/deployments/completed', completionEndpointConsent: true, completionIncludeSecrets: true, completionTimeout: '45' }, ['Completion:   configured (not executed during dry run)']],
   ['minimal PostgreSQL Docker', {}, ['Database:     postgres, in a container', 'Modules:      none', 'Source:       fresh Laravel ^13.0']],
   ['MySQL Docker with custom identity', { dbType: 'mysql', dbNames: { postgres: { name: '', user: '' }, mysql: { name: 'app_db', user: 'app_user' } } }, ['Database:     mysql, in a container']],
   ['PostgreSQL native', { dbLocation: 'native', ports: { ...initialConfig.ports, postgres: '5432' } }, ['Database:     postgres, native on the host']],

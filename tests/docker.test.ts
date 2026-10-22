@@ -52,8 +52,47 @@ describe.skipIf(!enabled)('published immutable Docker CLI', () => {
     const output = execFileSync('docker', [...prefix, '-c', stub], { encoding: 'utf8', timeout: 30000 });
     expect(output).toContain('Nothing was changed.');
   });
+  it.each(['bash', 'docker', 'python-native', 'python-docker'] as const)('%s validates callbacks without executing or delivering them', runner => {
+    const config = scenario({ completionEnabled: true, onComplete: '/opt/laraship-hooks/notify.sh', completionScriptConsent: true,
+      completionEndpoint: 'https://api.example.com/completed', completionEndpointConsent: true,
+      completionTokenFile: '/opt/laraship-hooks/token', completionTimeout: '45', completionIncludeSecrets: true });
+    const result = generate(config, runner);
+    const fixture = resolve('tmp/docker-configs/completion.config');
+    mkdirSync('tmp/docker-configs', { recursive: true });
+    writeFileSync(fixture, result.config);
+    const setup = `set -e
+install -d -m 700 /opt/laraship-hooks /tmp/adapter-bin
+printf '#!/bin/sh\\ntouch /tmp/hook-was-called\\n' > /opt/laraship-hooks/notify.sh
+chmod 700 /opt/laraship-hooks/notify.sh
+printf 'SYNTHETIC_TEST_TOKEN\\n' > /opt/laraship-hooks/token
+chmod 600 /opt/laraship-hooks/token
+printf '#!/bin/sh\\nexec python3 -m laraship "$@"\\n' > /tmp/adapter-bin/laraship
+chmod 700 /tmp/adapter-bin/laraship
+cat > /tmp/adapter-bin/docker <<'STUB'
+#!/bin/bash
+if [ "$1" = info ]; then printf 'linux\\n'; exit 0; fi
+printf '%s\\n' "$@" > /tmp/adapter-arguments
+while [ "$1" != '${CLI_IMAGE.reference}' ]; do shift; done
+shift
+exec /usr/local/bin/laraship "$@"
+STUB
+chmod 700 /tmp/adapter-bin/docker
+export PATH="/tmp/adapter-bin:$PATH" PYTHONPATH=/source/src
+${result.dryRun}
+${runner.startsWith('python') ? `laraship deploy --backend ${runner === 'python-docker' ? `docker --image ${CLI_IMAGE.reference} --mount-readonly /opt/laraship-hooks` : 'native'} -- --dry-run --config /tmp/fixture.config` : '/usr/local/bin/laraship deploy --dry-run --config /tmp/fixture.config'}
+test ! -e /tmp/hook-was-called
+${runner === 'python-docker' ? "grep -Fx -- '--read-only' /tmp/adapter-arguments\ngrep -Fx -- 'none' /tmp/adapter-arguments\ngrep -F -- 'src=/opt/laraship-hooks' /tmp/adapter-arguments\n! grep -F -- '/var/run/docker.sock' /tmp/adapter-arguments" : ''}
+`;
+    const output = execFileSync('docker', ['run', '--rm', '--pull', 'never', '--network', 'none', '--label', label,
+      '--mount', `type=bind,src=${fixture},dst=/tmp/fixture.config,readonly`,
+      '--mount', `type=bind,src=${resolve('tmp/upstream-laraship')},dst=/source,readonly`,
+      '--entrypoint', 'bash', CLI_IMAGE.reference, '-c', setup], { encoding: 'utf8', timeout: 30000 });
+    expect(output.match(/Nothing was changed\./g)).toHaveLength(2);
+    expect(output).toContain('configured (not executed during dry run)');
+    expect(output).not.toContain('SYNTHETIC_TEST_TOKEN');
+  });
   it('contains the same command contracts as the audited source revision', () => {
-    const files = ['deploy-laravel.sh', 'versions.env', 'VERSION', 'list-projects.sh', 'update.sh', 'backup.sh', 'lib/runtime.sh', 'lib/proxy.sh', 'lib/endpoint.py', 'docker-preflight.py',
+    const files = ['deploy-laravel.sh', 'versions.env', 'VERSION', 'list-projects.sh', 'update.sh', 'backup.sh', 'lib/runtime.sh', 'lib/proxy.sh', 'lib/endpoint.py', 'lib/completion.py', 'lib/completion.sh', 'docker-preflight.py',
       'modules/backup.sh', 'modules/filament.sh', 'modules/horizon.sh', 'modules/queue.sh', 'modules/redis.sh',
       'presets/admin-panel.conf', 'presets/api.conf', 'presets/staging.conf'];
     // No server access: compare image contents with the existing pinned local source fixture.

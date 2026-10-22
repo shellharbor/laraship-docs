@@ -30,6 +30,14 @@ export interface WizardConfig {
   expert: boolean;
   postDeploy: string;
   postDeployConsent: boolean;
+  completionEnabled: boolean;
+  onComplete: string;
+  completionEndpoint: string;
+  completionTokenFile: string;
+  completionTimeout: string;
+  completionIncludeSecrets: boolean;
+  completionScriptConsent: boolean;
+  completionEndpointConsent: boolean;
 }
 export const initialConfig: WizardConfig = {
   source: 'new', laravelVersion: '13.0', presets: [], repo: '', branch: '', deployKey: '',
@@ -39,5 +47,7 @@ export const initialConfig: WizardConfig = {
   authUser: '', phpUploadMax: '', ports: { http: '', https: '', php: '', redis: '', postgres: '', mysql: '' },
   createBackup: false, createDhparam: false, endpoint: '', endpointConsent: false,
   expert: false, postDeploy: '', postDeployConsent: false,
+  completionEnabled: false, onComplete: '', completionEndpoint: '', completionTokenFile: '', completionTimeout: '30',
+  completionIncludeSecrets: false, completionScriptConsent: false, completionEndpointConsent: false,
 };
 export interface Issue { field: string; code: string; message: string; step: number }

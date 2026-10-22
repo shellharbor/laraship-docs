@@ -1,6 +1,7 @@
 import { effectiveConfig, presetDefaults } from './constraints';
 import { PRESET_NAMES } from '../data/upstream';
 import type { Issue, WizardConfig } from './wizardSchema';
+import type { Runner } from './runner';
 
 export const isSshRepo = (repo: string) => /^ssh:\/\//.test(repo) || /^[A-Za-z0-9._-]+@[A-Za-z0-9.-]+:.+/.test(repo);
 export const isEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -26,6 +27,7 @@ export function validate(config: WizardConfig): Issue[] {
     ['repo', e.repo, 0], ['branch', e.branch, 0], ['deployKey', e.deployKey, 0], ['slug', e.slug, 1],
     ['domain', e.domain, 1], ['sslEmail', e.sslEmail, 1], ['filamentName', e.filamentName, 3],
     ['filamentEmail', e.filamentEmail, 3], ['endpoint', e.endpoint, 4], ['postDeploy', e.postDeploy, 4],
+    ['onComplete', e.onComplete, 4], ['completionEndpoint', e.completionEndpoint, 4], ['completionTokenFile', e.completionTokenFile, 4],
   ];
   for (const [field, value, step] of strings) {
     if (/[\x00-\x1f\x7f]/.test(value)) add(field, 'single-line', 'Use a single line without control characters.', step);
@@ -69,5 +71,30 @@ export function validate(config: WizardConfig): Issue[] {
     if (!e.endpointConsent) add('endpointConsent', 'endpoint-consent', 'Acknowledge that the deployer sends project credentials to this endpoint.', 4);
   }
   if (e.expert && e.postDeploy && !e.postDeployConsent) add('postDeployConsent', 'code-consent', 'Acknowledge that this command executes arbitrary code inside the PHP container.', 4);
+  if (e.completionEnabled) {
+    if (!e.onComplete && !e.completionEndpoint) add('onComplete', 'completion-target', 'Choose a completion script or HTTPS endpoint, or disable completion notifications.', 4);
+    for (const [field, path] of [['onComplete', e.onComplete], ['completionTokenFile', e.completionTokenFile]]) {
+      if (path && (!/^\/(?!\/)[^\x00-\x1f\x7f]+$/.test(path) || path.endsWith('/') || path.split('/').some(part => part === '..' || part === '.'))) add(field, 'completion-path', 'Use an absolute server file path without . or .. components. Ownership and permissions are checked on the server.', 4);
+    }
+    if (e.onComplete && !e.completionScriptConsent) add('completionScriptConsent', 'completion-script-consent', 'Acknowledge that the trusted script runs as the deploy user, normally root.', 4);
+    if (e.completionEndpoint) {
+      try {
+        const url = new URL(e.completionEndpoint);
+        if (!/^https:\/\//.test(e.completionEndpoint) || url.protocol !== 'https:' || !url.hostname || url.username || url.password || url.port === '0' || /[\s\\]/.test(e.completionEndpoint)) throw new Error();
+      } catch { add('completionEndpoint', 'endpoint', 'Use an absolute HTTPS URL without credentials or whitespace.', 4); }
+      if (!e.completionEndpointConsent) add('completionEndpointConsent', 'completion-endpoint-consent', 'Acknowledge sending the final deployment report to this API.', 4);
+    }
+    if (e.completionTokenFile && !e.completionEndpoint) add('completionTokenFile', 'completion-token', 'A token file requires a completion endpoint. Enter only its server path, never the token.', 4);
+    if (!/^[0-9]+$/.test(e.completionTimeout) || +e.completionTimeout < 1 || +e.completionTimeout > 300) add('completionTimeout', 'completion-timeout', 'Choose a whole timeout from 1 to 300 seconds.', 4);
+  }
   return issues;
+}
+
+export function validateRunner(config: WizardConfig, runner: Runner): Issue[] {
+  if (runner !== 'python-docker') return [];
+  return ([['deployKey', config.source === 'existing' ? config.deployKey : '', 0],
+    ['onComplete', config.completionEnabled ? config.onComplete : '', 4],
+    ['completionTokenFile', config.completionEnabled ? config.completionTokenFile : '', 4]] as const)
+    .filter(([, path]) => /[,"\r\n]/.test(path) || path.split('/').includes('..'))
+    .map(([field, , step]) => ({ field, step, code: 'python-mount', message: 'Python Docker mounts do not support commas, double quotes or .. in paths. Change the path or use the Docker image runner.' }));
 }

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Update the audited LaraShip contract and immutable Docker image to 1.3.0; add pipx/pip installation guidance and Python native/Docker command generation, management, mount validation and native-DB fallback.
+- Add final deployment completion scripts and HTTPS POST reports, private token-file paths, bounded timeout, explicit password inclusion, trust acknowledgements, bilingual lifecycle guidance and storage exclusion. Preserve application post-deploy and legacy PUT behavior.
+- Verify new runner/hook generation against source and the published image, expand desktop/mobile accessibility journeys, and improve badge contrast.
+
 - Added multiple compatible preset selection with visible, accessible explanations for Queue/Horizon and existing-application restrictions. Compatible presets combine modules, Basic Auth and upload defaults; deselection preserves manual service choices.
 - Added repeated --preset flags and PRESET config entries in stable order for both Bash and Docker, step-0 validation, legacy saved-preference migration and safe restoration of compatible preset sets.
 - Expanded domain, real Bash/Docker dry-run and desktop/mobile tests for combined presets, conflicts, keyboard selection, source changes, exported configs and saved preferences.

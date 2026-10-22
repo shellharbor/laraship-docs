@@ -57,3 +57,13 @@
   .compact .runner-options{grid-template-columns:1fr 1fr}
   .compact .runner-option strong svg{display:none}
 }
+
+.release-note{display:flex;align-items:center;gap:18px;max-width:1200px;margin:0 auto 25px;padding:20px 24px;background:#eef5e6;border:1px solid var(--line);border-radius:8px}
+.release-note p{flex:1;margin:0;font-size:13px;line-height:1.8}
+.release-note a{font-size:12px;color:#355d3c;text-decoration:underline;white-space:nowrap}
+.completion-fields{padding:8px 0 18px}
+.completion-settings{border-bottom:1px solid var(--line);margin-bottom:16px}
+.badge{color:#355d3c}
+@media(max-width:1320px){.release-note{margin-left:45px;margin-right:45px}}
+@media(max-width:1050px){.release-note{margin-left:28px;margin-right:28px}}
+@media(max-width:720px){.release-note{margin-left:20px;margin-right:20px;flex-wrap:wrap;gap:10px;padding:16px}.release-note p{flex-basis:100%}.compact .runner-options{grid-template-columns:minmax(0,1fr)}}

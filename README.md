@@ -2,7 +2,7 @@
 
 A static React + TypeScript configurator for [LaraShip](https://github.com/shellharbor/laraship). It generates commands in the browser for an Ubuntu server; it never connects to that server or performs a deployment itself.
 
-The CLI contract is pinned to **LaraShip 1.2.2**, commit `a60817564e2e9efe018bbcaee9f8ba1173464ff6`. See the [audit](docs/upstream-compatibility.md), [complete option registry](docs/cli-options.md), and [verification report](docs/testing.md).
+The CLI contract is pinned to **LaraShip 1.3.0**, commit `4dfec97ae4c227fe35cf84f5ac5b5e65b18a1c30`. See the [audit](docs/upstream-compatibility.md), [complete option registry](docs/cli-options.md), and [verification report](docs/testing.md).
 
 ## Develop
 
@@ -31,8 +31,9 @@ Production files are in `dist/`. No Docker image is required or supplied by this
 - HTTPS by default; optional HTTP, Filament, Redis integration, queue worker, Horizon and database backups.
 - Multiple compatible admin-panel/api/staging presets; automatic dependencies and explained conflict blocks.
 - Advanced names/users, host ports, Basic Auth user, PHP upload limits, project ZIP, project DH parameters, HTTPS endpoint and an explicitly acknowledged Expert hook.
+- Final completion reports via trusted script and/or HTTPS POST, private token-file paths, bounded timeout and explicit application-password sharing.
 - Deterministic quoted deploy/dry-run commands and a local `deploy.config` download.
-- Visible English/Russian installation guide and a shared Bash/Docker CLI runner choice. Runner choice is held in memory only.
+- Visible English/Russian installation guide and a shared Bash, Docker image, Python native or Python Docker runner choice. Runner choice is held in memory only.
 
 The Redis container belongs to LaraShip's base stack; its module configures Laravel cache/session/queue integration. The scheduled database backup module is distinct from a one-time project ZIP.
 
@@ -46,16 +47,32 @@ Commands repeat `--preset NAME`, and config exports repeat `PRESET="NAME"` on se
 
 ## Install LaraShip on the target server
 
-The website's **Installation** section comes before the configurator. It explains the toolkit, SSH workflow, Ubuntu prerequisites, DNS/ports and both installation methods. Application services use Docker with either CLI runner.
+The website's **Installation** section comes before the configurator. It explains the toolkit, SSH workflow, Ubuntu prerequisites, DNS/ports and all installation methods. Application services use Docker with every CLI runner.
 
 - **Bash script:** install the listed host packages, clone the complete official repository into a previously absent `/opt/laraship`, and check out the audited source revision. Do not download the deployment script alone. Review the toolkit before using sudo. Docker Compose V2 must be available when Docker is already installed; LaraShip can install Docker CE when absent.
 - **Docker image:** install Docker Engine on a supported Linux amd64 server first ([official Ubuntu guide](https://docs.docker.com/engine/install/ubuntu/)), then pull and inspect the published CLI image. It already includes the toolkit, Docker client and Compose plugin. A separate source checkout is optional.
 
-The image is `shellharbor/laraship:1.2.2`, pinned in generated commands to `shellharbor/laraship@sha256:ddc03c1636a48e6d4e290cc5ba32f502995314335603139db16d938d63a3ab8b`. Registry metadata and OCI labels were verified on 2026-10-22. Its source label is `39f150b133744752433f02c30395767d541f133a`; audited CLI files were compared with the website's source pin, rather than assuming these two revisions are identical. See the [compatibility audit](docs/upstream-compatibility.md).
+The image is `shellharbor/laraship:1.3.0`, pinned in generated commands to `shellharbor/laraship@sha256:af97f0378afc5bd911a39d3af34b0a73836ccd1b4d4c052d552a643334fd1eca`. Registry metadata and OCI labels were verified on 2026-10-22. Its OCI source revision matches the audited release commit; deployment/management/module/preset/helper/preflight/entrypoint file hashes are also checked. See the [compatibility audit](docs/upstream-compatibility.md).
 
-Docker deploy/management commands use the target server's Docker socket, host networking and identical host/container paths for `/var/www`, `/run/lock/laraship` and `/var/backups/laraship`. Create those directories first using the guide. Docker socket access grants administrative control; review and trust the image. This adapter is for a Linux server, not Docker Desktop path mapping or a remote daemon. Informational `--version`, help and ordinary dry-run need no socket or deployment mounts. A supplied SSH key and configuration file are mounted read-only at their absolute server paths. Replace every occurrence of the config path after uploading the file to the server.
+Docker deploy/management commands use the target server's Docker socket, host networking and identical host/container paths for `/var/www`, `/run/lock/laraship` and `/var/backups/laraship`. Create those directories first using the guide. Docker socket access grants administrative control; review and trust the image. This adapter is for a Linux server, not Docker Desktop path mapping or a remote daemon. Informational `--version`, help and ordinary dry-run need no socket or deployment mounts. Supplied SSH keys, completion scripts, token files and configuration files are mounted read-only at their absolute server paths. Replace every occurrence of the config path after uploading the file to the server.
 
-**Native PostgreSQL/MySQL provisioning requires Bash on the host.** The wizard explains the limitation and emits Bash when native DB is selected, even if Docker was preferred earlier. Docker choice becomes available again with a container database. A project ZIP defaults to `/tmp` under Bash and `/var/backups/laraship` under Docker; database dumps are separate.
+**Native PostgreSQL/MySQL provisioning requires Bash or Python CLI with the native backend on the host.** A direct Docker preference resolves to Bash; Python Docker resolves to Python native. Docker choice becomes available again with a container database. A project ZIP defaults to `/tmp` under Bash and `/var/backups/laraship` under Docker; database dumps are separate.
+
+### Python CLI (new in 1.3.0)
+
+Install Python 3.10+ and pipx on the target server, then run `pipx install laraship==1.3.0`. The guide also provides a pip/venv alternative without changing OS Python. Python is an installation/execution adapter for Laravel deployment, not a new application framework.
+
+Select **Python CLI · native** to download and checksum-verify the complete toolkit with `laraship install --backend native --version 1.3.0`. Existing target directories/symlinks are refused. Select **Python CLI · Docker** to use the verified immutable image. Adapter options precede `--`; deployment/configuration flags follow it. Privileged commands use `sudo "$(command -v laraship)"` so pipx's executable remains available when sudo resets PATH. Management commands use the same backend. Installation/upgrades of the adapter do not update deployed applications or an existing toolkit.
+
+### Final completion notification (new in 1.3.0)
+
+In **Advanced → Fine-tuning → Integrations**, enable completion and choose a trusted executable, an HTTPS API, or both. The generator supports `--on-complete`, `--completion-endpoint`, `--completion-token-file`, `--completion-timeout` (1–300 seconds, default 30) and explicit `--completion-include-secrets`. Tokens stay in private server files; the site accepts only their paths. No completion settings are saved in browser storage. Generated Docker commands expose required files read-only; Python Docker rejects path characters its adapter cannot encode.
+
+Final version-1 JSON covers success, operational failure and handled cancellation after validation arms the hook, including archive results when that stage is reached. Delivery follows project-lock release; each target is tried once with a bounded timeout. Callback errors preserve the original deployment exit code. Invalid configuration, help/dry-run, early toolkit/root failures, SIGKILL and power loss do not deliver. Completion applies to deploy, not update/backup/Kubernetes.
+
+Passwords are omitted by default. Explicit opt-in includes known application passwords for **both** targets; DB root passwords, API tokens, SSH keys and .env are never included. Scripts execute as the deploy user (normally root), inside the administrative CLI container for Docker. Hook/token files and parents require trusted ownership/permissions, no symlinks; token files need mode 600 or stricter. Root-only inputs can require sudo even for dry-run validation. Reports contain project identity and may contain unverified fields on failure; protect receiver storage.
+
+The old `--post-deploy` remains an application setup command inside PHP and repeats on repository updates. The old credential `--endpoint` remains PUT before ZIP creation and is available under its own legacy disclosure. Completion uses final JSON on stdin / HTTPS POST and an API Idempotency-Key equal to run_id. The browser contacts neither endpoint.
 
 ## Secrets and validation boundary
 
@@ -63,7 +80,7 @@ There are no password fields. LaraShip generates secrets on the server. **Native
 
 Optional persistent storage contains only an allowlist of stack preferences, not emails, domain/slug, repository URL, key path, endpoint, commands or passwords. It is off by default; Clear data resets everything. Config export includes entered non-password settings and can include a sensitive URL/hook: review it, keep it out of Git and use `chmod 600`. Do not source the config as shell code.
 
-The browser validates syntax and compatibility, not DNS, ACME, SSH keys, open ports, Ubuntu packages or database connectivity. Native databases must already be installed and configured for Docker access. Existing repositories need `artisan` and `composer.json` at their root and prebuilt frontend assets. A deployment refuses an existing project directory.
+The browser validates syntax and compatibility, not DNS, ACME, SSH keys, hook/token ownership or permissions, open ports, Ubuntu packages or database connectivity. Native databases must already be installed and configured for Docker access. Existing repositories need `artisan` and `composer.json` at their root and prebuilt frontend assets. A deployment refuses an existing project directory.
 
 ## Browser and upstream checks
 
@@ -79,7 +96,7 @@ Upstream differential tests require a full pinned source checkout. Review that s
 
 ```sh
 git clone https://github.com/shellharbor/laraship.git tmp/upstream-laraship
-git -C tmp/upstream-laraship checkout --detach a60817564e2e9efe018bbcaee9f8ba1173464ff6
+git -C tmp/upstream-laraship checkout --detach 4dfec97ae4c227fe35cf84f5ac5b5e65b18a1c30
 npm run test:upstream
 ```
 
@@ -88,7 +105,7 @@ On Windows, install Git Bash or set `BASH_BIN` to its executable. `LARASHIP_UPST
 Optional published-image checks require Docker client/daemon, the source fixture above and the exact image already pulled after review:
 
 ```sh
-docker pull shellharbor/laraship@sha256:ddc03c1636a48e6d4e290cc5ba32f502995314335603139db16d938d63a3ab8b
+docker pull shellharbor/laraship@sha256:af97f0378afc5bd911a39d3af34b0a73836ccd1b4d4c052d552a643334fd1eca
 npm run test:docker
 ```
 

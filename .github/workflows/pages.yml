@@ -27,7 +27,7 @@ jobs:
       - name: Obtain audited upstream for read-only dry-run tests
         run: |
           git clone https://github.com/shellharbor/laraship.git tmp/upstream-laraship
-          git -C tmp/upstream-laraship checkout --detach a60817564e2e9efe018bbcaee9f8ba1173464ff6
+          git -C tmp/upstream-laraship checkout --detach 4dfec97ae4c227fe35cf84f5ac5b5e65b18a1c30
       - run: npm run test:upstream
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e

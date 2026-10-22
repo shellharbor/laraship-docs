@@ -1,9 +1,9 @@
-import { CLI_OPTION_MAP, UPSTREAM } from '../data/upstream';
+import { CLI_IMAGE, CLI_OPTION_MAP, UPSTREAM } from '../data/upstream';
 import { effectiveConfig } from './constraints';
 import { shellQuote } from './shellQuote';
-import { validate } from './validate';
+import { validate, validateRunner } from './validate';
 import type { WizardConfig } from './wizardSchema';
-import { CONFIG_PATH, dockerPrefix, formatDockerPrefix, type Runner } from './runner';
+import { CONFIG_PATH, dockerPrefix, formatDockerPrefix, pythonPrefix, usesDocker, usesPython, type Runner } from './runner';
 
 export const MYSQL_PLACEHOLDER = '<MYSQL_ROOT_PASSWORD>';
 export const SCRIPT = '/opt/laraship/deploy-laravel.sh';
@@ -35,6 +35,13 @@ export function generateArgv(config: WizardConfig): string[] {
   if (e.createDhparam) argv.push('--create-dhparam');
   value('--endpoint', e.endpoint);
   if (e.expert) value('--post-deploy', e.postDeploy);
+  if (e.completionEnabled) {
+    value('--on-complete', e.onComplete);
+    value('--completion-endpoint', e.completionEndpoint);
+    value('--completion-token-file', e.completionTokenFile);
+    if (+e.completionTimeout !== 30) value('--completion-timeout', String(+e.completionTimeout));
+    if (e.completionIncludeSecrets) argv.push('--completion-include-secrets');
+  }
   if (e.https) value('--ssl-email', e.sslEmail); else argv.push('--no-ssl');
   return argv;
 }
@@ -47,19 +54,22 @@ function formatArgs(argv: string[]): string {
   return lines.join(' \\\n');
 }
 export function generate(config: WizardConfig, runner: Runner = 'bash') {
-  if (runner === 'docker' && config.dbLocation === 'native') throw new Error('Native database provisioning requires the Bash runner on the server.');
+  if (usesDocker(runner) && config.dbLocation === 'native') throw new Error('Native database provisioning requires the Bash runner or Python native backend on the server.');
+  const runnerIssues = validateRunner(config, runner);
+  if (runnerIssues.length) throw new Error(runnerIssues.map(issue => issue.message).join('\n'));
   const argv = generateArgv(config);
   const needsSecret = argv.includes('--db-root-password');
   const formatted = formatArgs(argv);
   const keyFiles = config.source === 'existing' && config.deployKey ? [config.deployKey] : [];
-  const deploy = runner === 'docker'
-    ? `${formatDockerPrefix(true, keyFiles)} deploy \\\n${formatted}`
+  const files = [...keyFiles, ...(config.completionEnabled ? [config.onComplete, config.completionTokenFile].filter(Boolean) : [])];
+  const deploy = usesPython(runner) ? `${pythonPrefix(runner, 'deploy', true, files)} -- \\\n${formatted}` : runner === 'docker'
+    ? `${formatDockerPrefix(true, files)} deploy \\\n${formatted}`
     : `sudo bash ${SCRIPT} \\\n${formatted}`;
-  const dryRun = runner === 'docker'
-    ? `${formatDockerPrefix(false, keyFiles)} deploy --dry-run \\\n${formatted}`
+  const dryRun = usesPython(runner) ? `${pythonPrefix(runner, 'deploy', false, files)} -- --dry-run \\\n${formatted}` : runner === 'docker'
+    ? `${formatDockerPrefix(false, files)} deploy --dry-run \\\n${formatted}`
     : `bash ${SCRIPT} --dry-run \\\n${formatted}`;
-  const configCommand = `chmod 600 ${CONFIG_PATH}\n${runner === 'docker'
-    ? `${formatDockerPrefix(true, [...keyFiles, CONFIG_PATH])} deploy --config ${shellQuote(CONFIG_PATH)}`
+  const configCommand = `chmod 600 ${CONFIG_PATH}\n${usesPython(runner) ? `${pythonPrefix(runner, 'deploy', true, [...files, CONFIG_PATH])} -- --config ${shellQuote(CONFIG_PATH)}` : runner === 'docker'
+    ? `${formatDockerPrefix(true, [...files, CONFIG_PATH])} deploy --config ${shellQuote(CONFIG_PATH)}`
     : `sudo bash ${SCRIPT} --config ${CONFIG_PATH}`}`;
   // Config parser removes one matching outer quote, without shell expansion or unescaping.
   const configLines = [`# LaraShip ${UPSTREAM.version} / ${UPSTREAM.commit}`, '# Parsed as data, never source this file. Keep private: chmod 600 deploy.config'];
@@ -77,7 +87,11 @@ export function generate(config: WizardConfig, runner: Runner = 'bash') {
     'unset LARASHIP_MYSQL_ROOT',
   ].join('\n') : '';
   return { argv, deploy, dryRun, config: `${configLines.join('\n')}\n`, needsSecret, nativeMysqlSnippet, configCommand,
-    runner, deployArgv: runner === 'docker' ? [...dockerPrefix(true, keyFiles), 'deploy', ...argv] : ['sudo', 'bash', SCRIPT, ...argv],
-    dryRunArgv: runner === 'docker' ? [...dockerPrefix(false, keyFiles), 'deploy', '--dry-run', ...argv] : ['bash', SCRIPT, '--dry-run', ...argv] };
+    runner, deployArgv: usesPython(runner) ? pythonArgv(runner, true, files, argv) : runner === 'docker' ? [...dockerPrefix(true, files), 'deploy', ...argv] : ['sudo', 'bash', SCRIPT, ...argv],
+    dryRunArgv: usesPython(runner) ? pythonArgv(runner, false, files, ['--dry-run', ...argv]) : runner === 'docker' ? [...dockerPrefix(false, files), 'deploy', '--dry-run', ...argv] : ['bash', SCRIPT, '--dry-run', ...argv] };
+}
+function pythonArgv(runner: Runner, server: boolean, files: string[], argv: string[]): string[] {
+  return [...(server ? ['sudo', '<ABSOLUTE_LARASHIP_CLI_PATH>'] : ['laraship']), 'deploy', '--backend', usesDocker(runner) ? 'docker' : 'native',
+    ...(usesDocker(runner) ? ['--image', CLI_IMAGE.reference, ...[...new Set(files)].flatMap(path => ['--mount-readonly', path])] : ['--directory', '/opt/laraship']), '--', ...argv];
 }
 export const INSTALL_COMMAND = `# Run once on the Ubuntu server; refuses an existing target.\nif [ -e /opt/laraship ]; then\n  printf '%s\\n' '/opt/laraship already exists. Review it before continuing.'\nelse\n  sudo git clone https://github.com/shellharbor/laraship.git /opt/laraship &&\n  sudo git -C /opt/laraship checkout --detach ${UPSTREAM.commit} &&\n  bash /opt/laraship/deploy-laravel.sh --version\nfi`;

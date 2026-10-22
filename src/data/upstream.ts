@@ -2,8 +2,8 @@ import type { ModuleName, PresetName } from '../domain/wizardSchema';
 
 export const UPSTREAM = {
   repository: 'https://github.com/shellharbor/laraship',
-  commit: 'a60817564e2e9efe018bbcaee9f8ba1173464ff6',
-  version: '1.2.2', verified: '2026-10-21',
+  commit: '4dfec97ae4c227fe35cf84f5ac5b5e65b18a1c30',
+  version: '1.3.0', verified: '2026-10-22',
   laravelDefault: '13.0', laravelMinimum: '12.0',
   postgresImage: 'postgres:17', mysqlImage: 'mysql:8.4',
 } as const;
@@ -12,9 +12,9 @@ export const sourceLink = (path: string) => `${UPSTREAM.repository}/blob/${UPSTR
 // Docker Hub tag metadata and OCI labels checked on 2026-10-22. CLI, modules,
 // presets, helpers and entrypoint are byte-identical to the source contract above.
 export const CLI_IMAGE = {
-  tag: 'shellharbor/laraship:1.2.2',
-  reference: 'shellharbor/laraship@sha256:ddc03c1636a48e6d4e290cc5ba32f502995314335603139db16d938d63a3ab8b',
-  revision: '39f150b133744752433f02c30395767d541f133a',
+  tag: 'shellharbor/laraship:1.3.0',
+  reference: 'shellharbor/laraship@sha256:af97f0378afc5bd911a39d3af34b0a73836ccd1b4d4c052d552a643334fd1eca',
+  revision: '4dfec97ae4c227fe35cf84f5ac5b5e65b18a1c30',
   platform: 'linux/amd64',
   verified: '2026-10-22',
   url: 'https://hub.docker.com/r/shellharbor/laraship',
@@ -72,8 +72,13 @@ export const CLI_OPTION_MAP: CliOption[] = [
   option('--auth-password', 'value', 'no controls', 'generated', 'server-only', 'Basic Auth', 'Basic Auth password'),
   option('--php-upload-max', 'value', '^[0-9]+[KMGkmg]?$', 'PHP 2M/8M; api preset 16M', 'basic', 'Explicit override only', 'PHP upload and post size'),
   option('--endpoint', 'value', 'absolute HTTPS URL, no whitespace/credentials', 'none', 'advanced', 'Explicit consent; sends generated project credentials', 'Server-side PUT notification', 'lib/endpoint.py'),
-  option('--allow-insecure-endpoint', 'boolean', 'true', 'false', 'server-only', 'HTTP endpoint; deliberately excluded from wizard', 'Allow plaintext project credentials'),
+  option('--allow-insecure-endpoint', 'boolean', 'true', 'false', 'server-only', 'HTTP legacy/completion endpoint; deliberately excluded from wizard', 'Allow plaintext project data and credentials'),
   option('--post-deploy', 'value', 'one line', 'none', 'expert', 'Explicit code execution consent', 'Shell code inside PHP container; reruns on repo updates'),
+  option('--on-complete', 'value', 'absolute executable file path; no symlinks or ..', 'none', 'advanced', 'Trusted owner and parent permissions; explicit code execution consent', 'Final JSON on stdin; runs as deploy user, inside CLI container for Docker', 'docs/COMPLETION.md'),
+  option('--completion-endpoint', 'value', 'absolute HTTPS URL without credentials or whitespace', 'none', 'advanced', 'Explicit consent; deployment only', 'Final JSON POST on success, operational failure or handled cancellation', 'docs/COMPLETION.md'),
+  option('--completion-token-file', 'value', 'absolute private file path', 'none', 'advanced', 'Completion endpoint; invoking user owns file, mode 600 or stricter', 'Bearer token is read on server; never entered in browser', 'docs/COMPLETION.md'),
+  option('--completion-timeout', 'value', 'integer 1–300 seconds', '30', 'advanced', 'At least one completion target', 'Per-target delivery timeout; errors preserve deployment exit status', 'docs/COMPLETION.md'),
+  option('--completion-include-secrets', 'boolean', 'true', 'false', 'advanced', 'Explicit opt-in; applies to both completion targets', 'Include known application passwords; never DB root passwords, tokens, SSH keys or .env', 'docs/COMPLETION.md'),
   option('--config', 'value', 'readable KEY=VALUE file', 'none', 'tooling', 'Once; never sourced; chmod 600', 'Downloadable non-secret config'),
   ...['--dry-run', '--list-presets', '--list-modules', '--help', '--version'].map(flag => option(flag, 'action', 'none', 'none', 'tooling', 'No root needed', 'Inspect without deployment')),
   ...['--type', '--bind-local', '--obtain-ssl', '--install-filament', '--use-redis', '--queue-worker'].map(flag => option(flag, flag === '--type' ? 'value' : 'boolean', flag === '--type' ? 'laravel' : 'true', flag === '--type' ? 'laravel' : ['--bind-local', '--obtain-ssl'].includes(flag) ? 'true' : 'false', 'compatibility', 'Never emitted by wizard', 'Supported compatibility option')),

@@ -28,6 +28,13 @@ export function localizeIssues(issues: Issue[], language: Language): Issue[] {
     endpoint: 'Укажите абсолютный HTTPS URL без учётных данных и пробелов.',
     'endpoint-consent': 'Подтвердите, что deployer отправит созданные пароли проекта на этот endpoint.',
     'code-consent': 'Подтвердите выполнение произвольного кода внутри PHP-контейнера.',
+    'completion-target': 'Укажите скрипт завершения или HTTPS endpoint либо отключите уведомления завершения.',
+    'completion-path': 'Укажите абсолютный путь к файлу на сервере без компонентов . и ..; права и владельца проверит сервер.',
+    'completion-script-consent': 'Подтвердите доверие скрипту с правами пользователя deploy, обычно root.',
+    'completion-endpoint-consent': 'Подтвердите отправку итогового отчёта развёртывания в этот API.',
+    'completion-token': 'Для файла токена нужен endpoint завершения. Укажите путь на сервере, а не сам токен.',
+    'completion-timeout': 'Укажите целый тайм-аут от 1 до 300 секунд.',
+    'python-mount': 'Python Docker не поддерживает запятые, двойные кавычки или .. в путях mounts. Измените путь или выберите Docker-образ.',
   };
   return issues.map(issue => ({ ...issue, message: messages[issue.code] || issue.message }));
 }

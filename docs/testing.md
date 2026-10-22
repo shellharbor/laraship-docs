@@ -1,6 +1,6 @@
 # Verification report
 
-Local verification: 2026-10-22, Windows, Node.js 24.17.0/npm 11.13.0, Git Bash, Chromium 156 through Playwright 1.64.1. Optional Docker checks used Docker Desktop 4.96.2, client/daemon 29.9.2 and context desktop-linux (Linux amd64 daemon). Public fixture identities and domains are synthetic. No real passwords or infrastructure credentials were used. Multi-preset enhancement checks below are local; they do not establish publication of these changes.
+Local verification: 2026-10-22, Windows, Node.js 24.17.0/npm 11.13.0, Git Bash, Chromium 156 through Playwright 1.64.1. Optional Docker checks used Docker Desktop 4.96.2, client/daemon 29.9.2 and context desktop-linux (Linux amd64 daemon). Public fixture identities and domains are synthetic. No real passwords or infrastructure credentials were used. The 1.3.0 compatibility enhancement checks below are local; they do not establish publication of these changes.
 
 ## Checks
 
@@ -8,13 +8,13 @@ Local verification: 2026-10-22, Windows, Node.js 24.17.0/npm 11.13.0, Git Bash, 
 | --- | --- |
 | Strict TypeScript and production Vite build | Passed; static dist/, no backend or Docker runtime |
 | ESLint | Passed |
-| Vitest unit tests | 132 passed; 26 Bash and 20 Docker integrations deliberately skipped in the ordinary command |
-| Pinned upstream checks | 26 passed: parser registry, --help, 19 scenarios as argv and config, SSH key-path existence, 5 real Bash quoting/config round trips |
-| Published Docker CLI checks | 20 passed: OCI version/revision/platform, version/help, 17 supported container-DB scenarios as argv/config, quoted readonly key path and 19 audited file hashes |
-| Browser/axe | 24 scenarios verified (12 desktop + 12 mobile): 20 passed in the full run, and all 4 combined-preset journeys passed targeted reruns after the Basic Auth test locator was corrected. Zero axe violations in the checked final states |
+| Vitest unit tests | 183 passed; 28 Bash and 26 Docker integrations deliberately skipped in the ordinary command |
+| Pinned upstream checks | 28 passed: parser registry, --help, 21 scenarios as argv and config, SSH key-path existence, 5 real Bash quoting/config round trips |
+| Published Docker CLI checks | 26 passed: OCI version/revision/platform, version/help, 19 container-DB scenarios as argv/config, quoted readonly key path, 21 audited file hashes and 4 completion/Python runner checks |
+| Browser/axe | 28 passed (14 desktop + 14 mobile) in the complete final rerun; zero axe violations in checked states |
 | Production project Pages path | Passed for /fixture-repo/: asset responses, direct opening, refresh, desktop/mobile overflow, canonical, robots/sitemap and .nojekyll |
 | npm audit --audit-level=low | Passed again before the multiple-preset release: 0 reported vulnerabilities, including development dependencies; dependencies are unchanged |
-| Visual inspection | Desktop 1440px and mobile 390px preset selection screenshots inspected, including selected compatible pairs and visible disabled reasons; earlier installation/production screenshots also inspected. No horizontal page overflow |
+| Visual inspection | Desktop/mobile completion and preset screenshots inspected; all four runner commands, readable conflict reasons and expanded final results are covered. No horizontal page overflow |
 
 The browser suite covers minimal PostgreSQL, native MySQL template handling, presets, source transitions, existing-repo credential rejection, Horizon/Redis dependencies, custom port conflicts, endpoint consent, clipboard, config download, opt-in storage, Clear data, keyboard focus and English/Russian UI. Added journeys exercise the visible installation guide, image setup, shared runner selection, Docker preview/deploy/management/config, config download and native PostgreSQL fallback. Unit tests also reject native MySQL with Docker. Axe checks landing/wizard and final results on both viewport classes. Automated axe checks do not establish complete WCAG conformance or replace assistive-technology testing.
 
@@ -22,11 +22,21 @@ During the earlier installation/runner enhancement, one mobile run completed its
 
 ## Docker image verification
 
-Registry tag metadata was verified through Docker Hub's API; the cached image was pulled by immutable digest. Details and source-label differences are in [the compatibility audit](upstream-compatibility.md). Actual offline containers passed version/help and the 17 non-native deployment scenarios. Each scenario also read a synthetic config through a read-only mount. The exact generated POSIX preview command was parsed inside the image with a synthetic key path containing commas, quotes and spaces. A scoped Docker function dispatched only the informational CLI; Docker also parsed the fixture mount's CSV path. No production server mount or deploy command was executed.
+Registry tag metadata was verified through Docker Hub's API; the cached image was pulled by immutable digest. Details and matching source identity are in [the compatibility audit](upstream-compatibility.md). Actual offline containers passed version/help and the 19 non-native deployment scenarios. Each scenario also read a synthetic config through a read-only mount. The exact generated POSIX preview command was parsed inside the image with a synthetic key path containing commas, quotes and spaces. A scoped Docker function dispatched only the informational CLI; Docker also parsed the fixture mount's CSV path. No production server mount or deploy command was executed.
 
-SHA256 comparisons covered deployment/version files, list/update/backup scripts, runtime/proxy/endpoint helpers, all modules/presets, preflight and the installed entrypoint. The immutable image's audited files match source pin a608175 despite its distinct OCI revision label. Container dry-run's hardcoded ZIP prose still says `/tmp`; runtime code and image environment establish `/var/backups/laraship` and the UI documents that path.
+SHA256 comparisons covered deployment/version files, list/update/backup scripts, runtime/proxy/endpoint/completion helpers, all modules/presets, preflight and the installed entrypoint. The 1.3.0 immutable image and its audited files match source pin 4dfec97, including its OCI revision label. Container dry-run's hardcoded ZIP prose still says `/tmp`; runtime code and image environment establish `/var/backups/laraship` and the UI documents that path.
 
 Image impact: this static site has no Docker build. Upstream Dockerfile, entrypoint, installed scripts/templates and dependencies were not changed; rebuilding the published image would not be appropriate for this website enhancement. Containers ran with `--rm`, `--pull never`, `--network none` and no Docker socket. Only synthetic files were mounted read-only. These tests created no volumes or build caches; their created and remaining volume/cache usage is 0 bytes. Docker disk/builder usage was inspected and no labeled test containers/volumes remained. Shared cache ownership was not established as belonging to this task and was preserved; no broad cleanup or image deletion was performed.
+
+## Python and completion verification
+
+Unit tests cover all existing deployment settings through Python native, argument forwarding through --, immutable Docker image selection, management commands (including readonly SSH keys on updates), native DB fallback and Python Docker mount-path limitations. Completion tests exercise target requirements, independent legacy options, default password omission/explicit inclusion, timeout boundaries, consent, HTTPS-only URLs, absolute file paths, disabled settings and storage exclusion.
+
+The 21 shared scenarios add two final API dry-runs, with passwords omitted or explicitly included and a custom timeout. Source and image both accept argv and config without contacting that API. Four additional offline image checks parse the exact generated Bash, Docker, Python native and Python Docker preview commands. Root-owned private synthetic hooks/token files are created only inside disposable containers. Sentinel assertions prove dry-run does not execute the hook; network is disabled. Python source is mounted read-only from the audited fixture. The nested Docker executable is stubbed to inspect the adapter arguments and forward only to the packaged dry-run; it verifies network none, read-only inspection and explicit input mounts without server socket access. These are adapter/engine parsing checks, not a real Docker server deployment.
+
+The published PyPI wheel SHA-256 was verified and its four adapter files matched source. The unpacked wheel returned laraship 1.3.0 inside an offline container. No fresh pip/pipx install or real release-download installation was performed on an Ubuntu host. Source/image, package metadata, requirements and installation examples were reviewed against the pinned upstream Python documentation.
+
+New browser journeys cover Python pipx/venv instructions, native/Docker selection, completion script/API/token paths, HTTP/timeout rejection, trust consent, passwords off by default, all four generated runners, downloaded callback configuration, no browser API requests, preference exclusion, native DB fallback and Russian UI. Axe checks the expanded form and final results. Initial checks exposed badge contrast and radio names including unrelated descriptive text; final styles/label associations correct these issues. The complete 28-case rerun passed; a one-off earlier desktop timeout while advancing steps did not recur.
 
 ## Upstream scenarios
 

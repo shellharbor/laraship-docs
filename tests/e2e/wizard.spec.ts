@@ -3,6 +3,85 @@ import AxeBuilder from '@axe-core/playwright';
 import { readFile } from 'node:fs/promises';
 
 const wizard = (page: Page) => page.getByRole('region', { name: 'Deployment configurator' });
+test('Python installation and final callbacks share settings across all runners without browser delivery', async ({ page }, info) => {
+  await page.goto('/');
+  const requests: string[] = [];
+  page.on('request', request => { if (!request.url().startsWith('http://127.0.0.1:4173')) requests.push(request.url()); });
+  const installation = page.locator('#installation');
+  await installation.getByRole('radio', { name: /^Python CLI · native/ }).check();
+  await expect(installation).toContainText('pipx install laraship==1.3.0');
+  await expect(installation).toContainText('install --backend native --version 1.3.0');
+  await installation.getByText('Prefer pip in a virtual environment?', { exact: true }).click();
+  await expect(installation).toContainText('python3 -m venv');
+  await page.getByRole('button', { name: 'Advanced', exact: true }).click();
+  await page.getByRole('checkbox', { name: 'Remember non-sensitive preferences' }).check();
+  await next(page); await identity(page); await next(page); await next(page); await next(page);
+  await page.getByText('Integrations', { exact: true }).click();
+  await page.getByRole('checkbox', { name: /^Deployment completion notification/ }).check();
+  await page.getByLabel('Completion script path').fill('/opt/laraship-hooks/notify.sh');
+  await page.getByLabel('Completion API URL').fill('http://api.example.com/completed');
+  await page.getByLabel('Bearer token file path').fill('/root/laraship-api.token');
+  await page.getByLabel('Completion timeout').fill('301');
+  await page.getByRole('button', { name: 'Review configuration' }).click();
+  await expect(page.getByRole('alert')).toContainText('HTTPS');
+  await expect(page.getByRole('alert')).toContainText('1 to 300');
+  await page.getByLabel('Completion API URL').fill('https://api.example.com/completed');
+  await page.getByLabel('Completion timeout').fill('45');
+  await page.getByRole('checkbox', { name: /^I trust this script/ }).check();
+  await page.getByRole('checkbox', { name: /^I trust this API/ }).check();
+  await expect(page.getByRole('checkbox', { name: /^Include application passwords/ })).not.toBeChecked();
+  await checkAccessibility(page);
+  await page.getByRole('button', { name: 'Review configuration' }).click();
+  const output = wizard(page);
+  for (const [name, mode] of [['Python CLI · native', 'python-native'], ['Python CLI · Docker', 'python-docker'], ['Docker image', 'docker'], ['Bash script', 'bash']]) {
+    await output.getByRole('radio', { name, exact: true }).first().check();
+    const code = output.locator('.code-block').filter({ hasText: `${mode} · deploy` });
+    await expect(code).toContainText("--on-complete '/opt/laraship-hooks/notify.sh'");
+    await expect(code).toContainText("--completion-token-file '/root/laraship-api.token'");
+    await expect(code).toContainText("--completion-timeout '45'");
+    await expect(code).not.toContainText('--completion-include-secrets');
+    if (mode === 'python-docker') await expect(code).toContainText("--mount-readonly '/root/laraship-api.token'");
+    if (mode.startsWith('python')) await expect(code).toContainText('sudo "$(command -v laraship)" deploy --backend');
+  }
+  await output.getByRole('radio', { name: 'Python CLI · Docker', exact: true }).first().check();
+  await output.getByText('Prefer a configuration file?', { exact: true }).click();
+  const downloading = page.waitForEvent('download');
+  await output.getByRole('button', { name: 'Download configuration' }).click();
+  const download = await downloading;
+  const text = await readFile((await download.path())!, 'utf8');
+  expect(text).toContain('COMPLETION_ENDPOINT="https://api.example.com/completed"');
+  expect(text).toContain('ON_COMPLETE="/opt/laraship-hooks/notify.sh"');
+  expect(text).not.toContain('COMPLETION_INCLUDE_SECRETS');
+  await expect(output).toContainText('Passwords omitted.');
+  await checkAccessibility(page);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  const saved = await page.evaluate(() => localStorage.getItem('laraship-preferences-v1'));
+  expect(saved).not.toMatch(/completion|onComplete|notify\.sh|api\.token/);
+  expect(requests).toEqual([]);
+  await page.addStyleTag({ content: 'html { scroll-behavior: auto !important; }' });
+  await output.screenshot({ path: `test-results/completion-${info.project.name}.png`, scale: 'css', animations: 'disabled' });
+  await page.reload();
+  await expect(page.locator('#installation').getByRole('radio', { name: /^Bash script/ })).toBeChecked();
+});
+
+test('Python Docker falls back to Python native for a host database and translates completion settings', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('#installation').getByRole('radio', { name: /^Python CLI · Docker/ }).check();
+  await page.getByRole('button', { name: 'Advanced', exact: true }).click();
+  await next(page); await identity(page); await next(page);
+  await page.getByRole('radio', { name: 'Native on this server' }).check();
+  await result(page);
+  await expect(wizard(page).getByRole('radio', { name: 'Python CLI · native', exact: true }).first()).toBeChecked();
+  await expect(wizard(page).getByRole('radio', { name: 'Python CLI · Docker', exact: true }).first()).toBeDisabled();
+  await expect(wizard(page).locator('.code-block').filter({ hasText: 'python-native · deploy' })).toContainText('--db-native');
+  await page.getByRole('button', { name: 'EN / RU: Switch to Russian' }).click();
+  await page.getByRole('button', { name: /Параметры/ }).click();
+  await page.getByText('Интеграции', { exact: true }).click();
+  await page.getByRole('checkbox', { name: /^Уведомление об итоге/ }).check();
+  await expect(page.getByLabel('URL API завершения')).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: /^Включить пароли приложения/ })).not.toBeChecked();
+  await checkAccessibility(page);
+});
 async function checkAccessibility(page: Page) {
   const result = await new AxeBuilder({ page }).analyze();
   expect(result.violations.map(violation => ({ id: violation.id,
@@ -139,7 +218,7 @@ test('native PostgreSQL forces Bash while Docker remains a separate installation
   await result(page);
   await expect(wizard(page).getByRole('radio', { name: 'Docker image', exact: true }).first()).toBeDisabled();
   await expect(wizard(page).getByRole('radio', { name: 'Bash script', exact: true }).first()).toBeChecked();
-  await expect(wizard(page)).toContainText('Using Bash: the Docker CLI image cannot provision native databases');
+  await expect(wizard(page)).toContainText('Native databases use Bash or Python CLI with the native backend');
   await expect(wizard(page).locator('.code-block').filter({ hasText: 'bash · deploy' })).toContainText('--db-native');
   await expect(wizard(page).locator('.code-block').filter({ hasText: 'docker · deploy' })).toHaveCount(0);
 });
@@ -213,6 +292,7 @@ test('Horizon dependency, Advanced ports and consent checks', async ({ page }) =
   await expect(page.getByRole('alert')).toContainText('Explicit ports must be different');
   await page.getByLabel('PHP', { exact: true }).fill('9150');
   await page.getByText('Integrations', { exact: true }).click();
+  await page.getByText('Legacy credential endpoint (PUT)', { exact: true }).click();
   await page.getByLabel('Notification endpoint').fill('https://notify.example/deploy');
   await page.getByRole('button', { name: 'Review configuration' }).click();
   await expect(page.getByRole('alert')).toContainText('Acknowledge');
