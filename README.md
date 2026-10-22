@@ -32,8 +32,22 @@ Production files are in `dist/`. No Docker image is required or supplied by this
 - Additive admin-panel/api/staging presets; automatic dependencies and blocked conflicts.
 - Advanced names/users, host ports, Basic Auth user, PHP upload limits, project ZIP, project DH parameters, HTTPS endpoint and an explicitly acknowledged Expert hook.
 - Deterministic quoted deploy/dry-run commands and a local `deploy.config` download.
+- Visible English/Russian installation guide and a shared Bash/Docker CLI runner choice. Runner choice is held in memory only.
 
 The Redis container belongs to LaraShip's base stack; its module configures Laravel cache/session/queue integration. The scheduled database backup module is distinct from a one-time project ZIP.
+
+## Install LaraShip on the target server
+
+The website's **Installation** section comes before the configurator. It explains the toolkit, SSH workflow, Ubuntu prerequisites, DNS/ports and both installation methods. Application services use Docker with either CLI runner.
+
+- **Bash script:** install the listed host packages, clone the complete official repository into a previously absent `/opt/laraship`, and check out the audited source revision. Do not download the deployment script alone. Review the toolkit before using sudo. Docker Compose V2 must be available when Docker is already installed; LaraShip can install Docker CE when absent.
+- **Docker image:** install Docker Engine on a supported Linux amd64 server first ([official Ubuntu guide](https://docs.docker.com/engine/install/ubuntu/)), then pull and inspect the published CLI image. It already includes the toolkit, Docker client and Compose plugin. A separate source checkout is optional.
+
+The image is `shellharbor/laraship:1.2.2`, pinned in generated commands to `shellharbor/laraship@sha256:ddc03c1636a48e6d4e290cc5ba32f502995314335603139db16d938d63a3ab8b`. Registry metadata and OCI labels were verified on 2026-10-22. Its source label is `39f150b133744752433f02c30395767d541f133a`; audited CLI files were compared with the website's source pin, rather than assuming these two revisions are identical. See the [compatibility audit](docs/upstream-compatibility.md).
+
+Docker deploy/management commands use the target server's Docker socket, host networking and identical host/container paths for `/var/www`, `/run/lock/laraship` and `/var/backups/laraship`. Create those directories first using the guide. Docker socket access grants administrative control; review and trust the image. This adapter is for a Linux server, not Docker Desktop path mapping or a remote daemon. Informational `--version`, help and ordinary dry-run need no socket or deployment mounts. A supplied SSH key and configuration file are mounted read-only at their absolute server paths. Replace every occurrence of the config path after uploading the file to the server.
+
+**Native PostgreSQL/MySQL provisioning requires Bash on the host.** The wizard explains the limitation and emits Bash when native DB is selected, even if Docker was preferred earlier. Docker choice becomes available again with a container database. A project ZIP defaults to `/tmp` under Bash and `/var/backups/laraship` under Docker; database dumps are separate.
 
 ## Secrets and validation boundary
 
@@ -62,6 +76,15 @@ npm run test:upstream
 ```
 
 On Windows, install Git Bash or set `BASH_BIN` to its executable. `LARASHIP_UPSTREAM_DIR` can select an already reviewed checkout. Without the explicit upstream command, its tests are skipped. Ordinary unit tests do not fetch or execute upstream code. Regenerate `docs/cli-options.md` with `node scripts/write-cli-reference.mjs` after intentional registry edits.
+
+Optional published-image checks require Docker client/daemon, the source fixture above and the exact image already pulled after review:
+
+```sh
+docker pull shellharbor/laraship@sha256:ddc03c1636a48e6d4e290cc5ba32f502995314335603139db16d938d63a3ab8b
+npm run test:docker
+```
+
+These tests never pull automatically, mount a Docker socket or deploy an application. They run offline informational containers, readonly synthetic file fixtures and compare audited image files with source. Test containers use `--rm` and a per-run ownership label; the wrapper removes only leftovers carrying that exact run label. No test volumes or build caches are created. Ordinary `npm test` and CI skip Docker integration; the browser and unit checks still cover both command formats.
 
 ## GitHub Pages
 

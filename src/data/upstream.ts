@@ -9,6 +9,17 @@ export const UPSTREAM = {
 } as const;
 export const sourceLink = (path: string) => `${UPSTREAM.repository}/blob/${UPSTREAM.commit}/${path}`;
 
+// Docker Hub tag metadata and OCI labels checked on 2026-10-22. CLI, modules,
+// presets, helpers and entrypoint are byte-identical to the source contract above.
+export const CLI_IMAGE = {
+  tag: 'shellharbor/laraship:1.2.2',
+  reference: 'shellharbor/laraship@sha256:ddc03c1636a48e6d4e290cc5ba32f502995314335603139db16d938d63a3ab8b',
+  revision: '39f150b133744752433f02c30395767d541f133a',
+  platform: 'linux/amd64',
+  verified: '2026-10-22',
+  url: 'https://hub.docker.com/r/shellharbor/laraship',
+} as const;
+
 // presets/*.conf and modules/horizon.sh at UPSTREAM.commit.
 export const PRESETS: Record<PresetName, { modules: ModuleName[]; basicAuth: boolean; upload: string; description: string }> = {
   none: { modules: [], basicAuth: false, upload: '', description: 'Start with a clean Laravel deployment.' },

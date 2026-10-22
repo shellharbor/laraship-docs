@@ -13,6 +13,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:upstream": "node scripts/check-upstream.mjs",
+    "test:docker": "node scripts/check-docker.mjs",
     "test:e2e": "playwright test",
     "test:pages": "node scripts/check-pages.mjs",
     "check": "npm run lint && npm test && npm run build"

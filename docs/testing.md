@@ -1,6 +1,6 @@
 # Verification report
 
-Local verification: 2026-10-22, Windows, Node.js 24.17.0/npm 11.13.0, Git Bash, Chromium 156 through Playwright 1.64.1. Public fixture identities and domains are synthetic. No real passwords or infrastructure credentials were used.
+Local verification: 2026-10-22, Windows, Node.js 24.17.0/npm 11.13.0, Git Bash, Chromium 156 through Playwright 1.64.1. Optional Docker checks used Docker Desktop 4.96.2, client/daemon 29.9.2 and context desktop-linux (Linux amd64 daemon). Public fixture identities and domains are synthetic. No real passwords or infrastructure credentials were used. Installation/runner enhancement checks below are local; they do not establish publication of these changes.
 
 ## Checks
 
@@ -8,14 +8,25 @@ Local verification: 2026-10-22, Windows, Node.js 24.17.0/npm 11.13.0, Git Bash, 
 | --- | --- |
 | Strict TypeScript and production Vite build | Passed; static dist/, no backend or Docker runtime |
 | ESLint | Passed |
-| Vitest unit tests | 84 passed; upstream tests deliberately skipped in the ordinary command |
+| Vitest unit tests | 103 passed; 22 Bash and 16 Docker integrations deliberately skipped in the ordinary command |
 | Pinned upstream checks | 22 passed: parser registry, --help, 15 scenarios as argv and config, SSH key-path existence, 5 real Bash quoting/config round trips |
-| Browser/axe | 12 passed (6 desktop + 6 mobile); zero axe violations on the checked landing/wizard and final-result states |
+| Published Docker CLI checks | 16 passed: OCI version/revision/platform, version/help, 13 supported container-DB scenarios as argv/config, quoted readonly key path and 19 audited file hashes |
+| Browser/axe | 16 passed (8 desktop + 8 mobile); zero axe violations on checked landing/wizard, Bash result and Docker result states |
 | Production project Pages path | Passed for /fixture-repo/: asset responses, direct opening, refresh, desktop/mobile overflow, canonical, robots/sitemap and .nojekyll |
-| npm audit --audit-level=low | Passed: 0 reported vulnerabilities, including development dependencies |
-| Visual inspection | Desktop 1440px and mobile 390px production screenshots inspected; responsive hero, wizard and footer render without horizontal page overflow |
+| npm audit --audit-level=low | Passed again before the installation/runner release: 0 reported vulnerabilities, including development dependencies; dependencies are unchanged |
+| Visual inspection | Desktop 1440px and mobile 390px installation screenshots inspected in addition to the earlier production screenshots; no horizontal page overflow |
 
-The browser suite covers minimal PostgreSQL, native MySQL template handling, presets, source transitions, existing-repo credential rejection, Horizon/Redis dependencies, custom port conflicts, endpoint consent, clipboard, config download, opt-in storage, Clear data, keyboard focus and English/Russian UI. Axe checks the landing/wizard and final result on both viewport classes. Automated axe checks do not establish complete WCAG conformance or replace assistive-technology testing.
+The browser suite covers minimal PostgreSQL, native MySQL template handling, presets, source transitions, existing-repo credential rejection, Horizon/Redis dependencies, custom port conflicts, endpoint consent, clipboard, config download, opt-in storage, Clear data, keyboard focus and English/Russian UI. Added journeys exercise the visible installation guide, image setup, shared runner selection, Docker preview/deploy/management/config, config download and native PostgreSQL fallback. Unit tests also reject native MySQL with Docker. Axe checks landing/wizard and final results on both viewport classes. Automated axe checks do not establish complete WCAG conformance or replace assistive-technology testing.
+
+One initial mobile run completed its flow/accessibility assertions but timed out saving a long full-page screenshot at device scale. Screenshots now use CSS pixel scale; the complete 16-test rerun passed. No product timeout or accessibility check was disabled.
+
+## Docker image verification
+
+Registry tag metadata was verified through Docker Hub's API; the cached image was pulled by immutable digest. Details and source-label differences are in [the compatibility audit](upstream-compatibility.md). Actual offline containers passed version/help and the 13 non-native deployment scenarios. Each scenario also read a synthetic config through a read-only mount. The exact generated POSIX preview command was parsed inside the image with a synthetic key path containing commas, quotes and spaces. A scoped Docker function dispatched only the informational CLI; Docker also parsed the fixture mount's CSV path. No production server mount or deploy command was executed.
+
+SHA256 comparisons covered deployment/version files, list/update/backup scripts, runtime/proxy/endpoint helpers, all modules/presets, preflight and the installed entrypoint. The immutable image's audited files match source pin a608175 despite its distinct OCI revision label. Container dry-run's hardcoded ZIP prose still says `/tmp`; runtime code and image environment establish `/var/backups/laraship` and the UI documents that path.
+
+Image impact: this static site has no Docker build. Upstream Dockerfile, entrypoint, installed scripts/templates and dependencies were not changed; rebuilding the published image would not be appropriate for this website enhancement. Containers ran with `--rm`, `--pull never`, `--network none` and no Docker socket. Only synthetic files were mounted read-only. These tests created no volumes or build caches; their created and remaining volume/cache usage is 0 bytes. Docker disk/builder usage was inspected and no labeled test containers/volumes remained. Shared cache ownership was not established as belonging to this task and was preserved; no broad cleanup or image deletion was performed.
 
 ## Upstream scenarios
 
@@ -39,7 +50,7 @@ Additional checks verify an existing local SSH key file path and literal apostro
 
 ## Review and boundaries
 
-Self-review covered emitted flags, preset precedence, stale source-specific values, native DB meaning, reserved/duplicate ports, shell/config quoting, URL credential rejection, pre-parser reserved action values, secret templates, persistence allowlist and deployment permissions. No independent reviewer was used because delegation was not authorized. Container impact: no site Docker images/build inputs; downloaded upstream files were not modified. No full deployment was attempted.
+Self-review covered emitted flags, preset precedence, stale source-specific values, native DB meaning/fallback, reserved/duplicate ports, shell/config/CSV quoting, Docker access and readonly file mounts, image identity, URL credential rejection, pre-parser reserved action values, secret templates, persistence allowlist and deployment permissions. No independent reviewer was used because delegation was not authorized. No full deployment was attempted. Socket/host-network preflight and actual provisioning on a Linux server remain unverified.
 
 GitHub Actions dependencies are pinned to exact official revision SHAs resolved during implementation.
 
@@ -49,7 +60,7 @@ On 2026-10-22 the user authorized committing, pushing and enabling Pages for [sh
 
 The `check` job in [the first workflow run](https://github.com/shellharbor/laraship-docs/actions/runs/39796257837) completed successfully on GitHub-hosted Ubuntu: lockfile installation, lint, unit tests, pinned upstream dry-run tests, Playwright desktop/mobile tests, production Pages-path smoke, production build, browser report and Pages artifact upload. The downloaded Pages artifact was independently inspected: canonical URL and asset paths target `https://shellharbor.github.io/laraship-docs/` and `/laraship-docs/`.
 
-Pages is configured with `build_type=workflow`, HTTPS enforced and deployment permitted from `main`. Initial publication was delayed while GitHub reported an [Actions results incident](https://www.githubstatus.com/) beginning at 14:18 UTC on 2026-10-22. The Deploy Pages step subsequently completed successfully; overall run/status reporting continued to lag.
+Pages is configured with `build_type=workflow`, HTTPS enforced and deployment permitted from `main`. Initial publication was delayed during a GitHub Actions results incident beginning at 14:18 UTC on 2026-10-22. Later verification confirmed [workflow 39798570550](https://github.com/shellharbor/laraship-docs/actions/runs/39798570550) completed successfully for commit 8e9dc2982aa86495104a1f22ba2689a1c9fc3d22: push event, main branch and successful check/deploy jobs. Initial reporting lag is historical, not an unresolved publication failure.
 
 Hosted smoke verification began at 14:44 UTC (17:44 Moscow) on 2026-10-22 against [the live site](https://shellharbor.github.io/laraship-docs/): HTTP 200, correct page title, complete minimal PostgreSQL Docker wizard journey, expected generated slug/DB arguments, page refresh, English/Russian switching, no horizontal overflow and no persisted form data. Desktop 1440×1000 and mobile 390×844 both passed with zero page errors or HTTP error responses. Local evidence is in ignored test-results/published-smoke.json and published desktop/mobile screenshots. Subsequent publication documentation commits do not change application assets; their automatic workflow runs remain visible under [Actions](https://github.com/shellharbor/laraship-docs/actions).
 

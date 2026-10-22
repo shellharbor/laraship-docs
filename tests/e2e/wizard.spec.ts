@@ -19,6 +19,53 @@ async function result(page: Page) {
   await expect(page.getByRole('heading', { name: 'Ready when you are.' })).toBeVisible();
 }
 test.beforeEach(async ({ page }) => { await page.goto('/'); });
+test('installation, Docker CLI commands, config mounts, language and accessibility', async ({ page }, info) => {
+  const installation = page.locator('#installation');
+  await expect(installation.getByRole('heading', { name: 'First, get LaraShip ready.' })).toBeVisible();
+  await expect(installation).toContainText('sudo git clone');
+  await installation.getByRole('radio', { name: 'Docker image' }).check();
+  await expect(installation).toContainText('docker pull shellharbor/laraship@sha256:');
+  await expect(installation).toContainText('linux/amd64');
+  await expect(installation).toContainText('Docker socket access grants administrative control');
+  await installation.screenshot({ path: `test-results/${info.project.name}-docker-installation.png`, scale: 'css' });
+  await page.getByRole('button', { name: 'Switch to Russian' }).click();
+  await expect(installation).toContainText('Установите Docker Engine на сервере');
+  await expect(installation.getByRole('radio', { name: 'Docker-образ' })).toBeChecked();
+  await page.getByRole('button', { name: 'Switch to English' }).click();
+  await next(page); await identity(page); await next(page); await result(page);
+  const output = wizard(page);
+  await expect(output.getByRole('radio', { name: 'Docker image', exact: true }).first()).toBeChecked();
+  const deploy = output.locator('.code-block').filter({ hasText: 'docker · deploy' });
+  const preview = output.locator('.code-block').filter({ hasText: 'docker · dry-run' });
+  await expect(deploy).toContainText('sudo docker run --rm -it --network host');
+  await expect(deploy).toContainText('src=/var/run/docker.sock,dst=/var/run/docker.sock');
+  await expect(deploy).toContainText('src=/var/backups/laraship,dst=/var/backups/laraship');
+  await expect(deploy).toContainText("--slug 'my-app'");
+  await expect(preview).toContainText('deploy --dry-run');
+  await expect(preview).not.toContainText('/var/run/docker.sock');
+  await output.getByText('Prefer a configuration file?', { exact: true }).click();
+  await expect(output.locator('.code-block').filter({ hasText: 'docker · config' })).toContainText('src=/path/to/deploy.config,dst=/path/to/deploy.config,readonly');
+  const download = page.waitForEvent('download');
+  await output.getByRole('button', { name: 'Download configuration' }).click();
+  expect((await download).suggestedFilename()).toBe('deploy.config');
+  await expect(output.locator('.code-block').filter({ hasText: 'docker · management' })).toContainText("'list'");
+  await checkAccessibility(page);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await output.getByRole('radio', { name: 'Bash script', exact: true }).first().check();
+  await expect(output.locator('.code-block').filter({ hasText: 'bash · deploy' })).toContainText('sudo bash /opt/laraship/deploy-laravel.sh');
+  await expect(installation.getByRole('radio', { name: 'Bash script' })).toBeChecked();
+});
+test('native PostgreSQL forces Bash while Docker remains a separate installation option', async ({ page }) => {
+  await page.locator('#installation').getByRole('radio', { name: 'Docker image' }).check();
+  await next(page); await identity(page); await next(page);
+  await page.getByRole('radio', { name: 'Native on this server' }).check();
+  await result(page);
+  await expect(wizard(page).getByRole('radio', { name: 'Docker image', exact: true }).first()).toBeDisabled();
+  await expect(wizard(page).getByRole('radio', { name: 'Bash script', exact: true }).first()).toBeChecked();
+  await expect(wizard(page)).toContainText('Using Bash: the Docker CLI image cannot provision native databases');
+  await expect(wizard(page).locator('.code-block').filter({ hasText: 'bash · deploy' })).toContainText('--db-native');
+  await expect(wizard(page).locator('.code-block').filter({ hasText: 'docker · deploy' })).toHaveCount(0);
+});
 test('minimal PostgreSQL, copied command, export, reload and accessibility', async ({ page, context }, info) => {
   const externalRequests: string[] = [];
   page.on('request', request => { if (!request.url().startsWith('http://127.0.0.1:4173')) externalRequests.push(request.url()); });
@@ -42,7 +89,7 @@ test('minimal PostgreSQL, copied command, export, reload and accessibility', asy
   expect(externalRequests).toEqual([]);
   await checkAccessibility(page);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.screenshot({ path: `test-results/${info.project.name}-result.png`, fullPage: true });
+  await page.screenshot({ path: `test-results/${info.project.name}-result.png`, fullPage: true, scale: 'css' });
   await page.reload(); await expect(page.getByRole('heading', { name: 'What are we shipping?' })).toBeVisible();
 });
 test('native MySQL is explicitly a manual template', async ({ page }) => {
@@ -110,7 +157,7 @@ test('keyboard navigation, Russian toggle and responsive landing', async ({ page
   await page.keyboard.press('Tab');
   await expect(page.getByRole('link', { name: 'Skip to configurator' })).toBeFocused();
   await checkAccessibility(page);
-  await page.screenshot({ path: `test-results/${info.project.name}-landing.png`, fullPage: true });
+  await page.screenshot({ path: `test-results/${info.project.name}-landing.png`, fullPage: true, scale: 'css' });
   await page.getByRole('button', { name: 'Switch to Russian' }).click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
   await expect(page.getByRole('heading', { name: 'Что разворачиваем?' })).toBeVisible();

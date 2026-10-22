@@ -9,6 +9,6 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   { languageOptions: { globals: { ...globals.browser, ...globals.node } } },
   // These validators deliberately detect/reject ASCII controls; the upstream test strips ANSI output.
-  { files: ['src/domain/shellQuote.ts', 'src/domain/validate.ts', 'tests/upstream.test.ts'], rules: { 'no-control-regex': 'off' } },
+  { files: ['src/domain/shellQuote.ts', 'src/domain/validate.ts', 'tests/upstream.test.ts', 'tests/docker.test.ts'], rules: { 'no-control-regex': 'off' } },
   { files: ['src/**/*.{ts,tsx}'], plugins: { 'react-hooks': hooks }, rules: hooks.configs.recommended.rules },
 );

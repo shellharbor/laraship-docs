@@ -3,6 +3,7 @@ import { effectiveConfig } from './constraints';
 import { shellQuote } from './shellQuote';
 import { validate } from './validate';
 import type { WizardConfig } from './wizardSchema';
+import { CONFIG_PATH, dockerPrefix, formatDockerPrefix, type Runner } from './runner';
 
 export const MYSQL_PLACEHOLDER = '<MYSQL_ROOT_PASSWORD>';
 export const SCRIPT = '/opt/laraship/deploy-laravel.sh';
@@ -45,12 +46,21 @@ function formatArgs(argv: string[]): string {
   }
   return lines.join(' \\\n');
 }
-export function generate(config: WizardConfig) {
+export function generate(config: WizardConfig, runner: Runner = 'bash') {
+  if (runner === 'docker' && config.dbLocation === 'native') throw new Error('Native database provisioning requires the Bash runner on the server.');
   const argv = generateArgv(config);
   const needsSecret = argv.includes('--db-root-password');
   const formatted = formatArgs(argv);
-  const deploy = `sudo bash ${SCRIPT} \\\n${formatted}`;
-  const dryRun = `bash ${SCRIPT} --dry-run \\\n${formatted}`;
+  const keyFiles = config.source === 'existing' && config.deployKey ? [config.deployKey] : [];
+  const deploy = runner === 'docker'
+    ? `${formatDockerPrefix(true, keyFiles)} deploy \\\n${formatted}`
+    : `sudo bash ${SCRIPT} \\\n${formatted}`;
+  const dryRun = runner === 'docker'
+    ? `${formatDockerPrefix(false, keyFiles)} deploy --dry-run \\\n${formatted}`
+    : `bash ${SCRIPT} --dry-run \\\n${formatted}`;
+  const configCommand = `chmod 600 ${CONFIG_PATH}\n${runner === 'docker'
+    ? `${formatDockerPrefix(true, [...keyFiles, CONFIG_PATH])} deploy --config ${shellQuote(CONFIG_PATH)}`
+    : `sudo bash ${SCRIPT} --config ${CONFIG_PATH}`}`;
   // Config parser removes one matching outer quote, without shell expansion or unescaping.
   const configLines = [`# LaraShip ${UPSTREAM.version} / ${UPSTREAM.commit}`, '# Parsed as data, never source this file. Keep private: chmod 600 deploy.config'];
   for (let i = 0; i < argv.length; i++) {
@@ -66,6 +76,8 @@ export function generate(config: WizardConfig) {
     deploy.replace(shellQuote(MYSQL_PLACEHOLDER), '"$LARASHIP_MYSQL_ROOT"'),
     'unset LARASHIP_MYSQL_ROOT',
   ].join('\n') : '';
-  return { argv, deploy, dryRun, config: `${configLines.join('\n')}\n`, needsSecret, nativeMysqlSnippet };
+  return { argv, deploy, dryRun, config: `${configLines.join('\n')}\n`, needsSecret, nativeMysqlSnippet, configCommand,
+    runner, deployArgv: runner === 'docker' ? [...dockerPrefix(true, keyFiles), 'deploy', ...argv] : ['sudo', 'bash', SCRIPT, ...argv],
+    dryRunArgv: runner === 'docker' ? [...dockerPrefix(false, keyFiles), 'deploy', '--dry-run', ...argv] : ['bash', SCRIPT, '--dry-run', ...argv] };
 }
 export const INSTALL_COMMAND = `# Run once on the Ubuntu server; refuses an existing target.\nif [ -e /opt/laraship ]; then\n  printf '%s\\n' '/opt/laraship already exists. Review it before continuing.'\nelse\n  sudo git clone https://github.com/shellharbor/laraship.git /opt/laraship &&\n  sudo git -C /opt/laraship checkout --detach ${UPSTREAM.commit} &&\n  bash /opt/laraship/deploy-laravel.sh --version\nfi`;
