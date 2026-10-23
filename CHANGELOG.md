@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Recheck lint, 248 unit tests, strict TypeScript/build and dependency advisories before the user-authorized command-format publication through GitHub Pages.
+- Show Bash, Docker, Python native and Python Docker deployment commands together with separate copy actions and a selected-runner marker; retain the preferred runner for preview/config/management.
+- Validate each alternative independently, explain unavailable native-DB/path/mount/image combinations and preserve server-only password templates; add unit and desktop/mobile regression coverage.
 - Recheck lint, 241 unit tests, strict TypeScript/build and dependency advisories before the user-authorized full-form publication through the existing GitHub Pages workflow.
 - Make the complete wizard form the default; expose database names/users/ports and service identity/template choices in their own steps with literal CLI flag labels.
 - Add in-wizard argument search with preserved selections, shared runner/execution controls and informational CLI commands; keep Basic optional and restore full mode on Clear data.

@@ -46,7 +46,7 @@ test('full wizard edits database identity, services and ports directly and expor
   await w.getByRole('checkbox', { name: /^Generate project DH/ }).check();
   await axe(page);
   await w.getByRole('button', { name: 'Review configuration', exact: true }).click();
-  const deploy = w.locator('.code-block').filter({ hasText: 'bash · deploy' });
+  const deploy = w.locator('.deployment-variant[data-runner="bash"] .code-block');
   for (const value of ["--db-postgres-user 'custom_pg_user'", "--db-postgres-name 'custom_pg_database'", "--port-postgres '5544'", "--filament-name 'Site Admin'", "--auth-user 'preview_user'", "--backup-keep '14'", '--create-backup', '--create-dhparam']) await expect(deploy).toContainText(value);
   await w.getByText('Prefer a configuration file?', { exact: true }).click();
   const downloading = page.waitForEvent('download');
@@ -56,7 +56,7 @@ test('full wizard edits database identity, services and ports directly and expor
   expect(config).toContain('DB_POSTGRES_NAME="custom_pg_database"');
   expect(config).toContain('PORT_POSTGRES="5544"');
   await w.getByRole('radio', { name: 'Docker image', exact: true }).first().check();
-  await expect(w.locator('.code-block').filter({ hasText: 'docker · deploy' })).toContainText("--db-postgres-user 'custom_pg_user'");
+  await expect(w.locator('.deployment-variant[data-runner="docker"] .code-block')).toContainText("--db-postgres-user 'custom_pg_user'");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   expect(await page.evaluate(() => localStorage.getItem('laraship-preferences-v1'))).not.toMatch(/custom_pg_user|custom_pg_database|preview_user|operator@example/);
 });

@@ -35,6 +35,8 @@ Production files are in `dist/`. No Docker image is required or supplied by this
 - Deterministic quoted deploy/dry-run commands and a local `deploy.config` download.
 - Visible English/Russian installation guide and a shared Bash, Docker image, Python native or Python Docker runner choice. Runner choice is held in memory only.
 
+The final step shows all compatible deployment commands together: **Bash**, **Docker**, **Python native** and **Python Docker**, each with its own copy button. Run one command for a deployment. The runner selector marks the preferred command and selects dry-run, configuration-file instructions and management commands. Native databases keep Bash/Python native available and explain why both Docker commands are unavailable. Other runner-specific path, mount and image-trust restrictions are checked separately, so an incompatible alternative never replaces its command with a different backend. Password placeholders remain server-side templates in every format.
+
 The Redis container belongs to LaraShip's base stack; its module configures Laravel cache/session/queue integration. The scheduled database backup module is distinct from a one-time project ZIP.
 
 ### Combine presets

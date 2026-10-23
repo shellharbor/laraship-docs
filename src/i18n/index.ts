@@ -4,6 +4,7 @@ export const translator = (language: Language) => (english: string, russian: str
 export function localizeIssues(issues: Issue[], language: Language): Issue[] {
   if (language === 'en') return issues;
   const messages: Record<string, string> = {
+    'native-docker': 'Docker runner не создаёт native-БД. Выберите БД в контейнере либо используйте Bash / Python native.',
     'laravel-version': 'Укажите версию X.Y не ниже 12.0. Наличие релиза и совместимость проверьте отдельно.',
     'secret-option': 'Выберите поддерживаемые серверные шаблоны паролей.',
     'insecure-consent': 'Подтвердите, что HTTP разрешён для обеих функций endpoint и может передавать пароли без шифрования.',

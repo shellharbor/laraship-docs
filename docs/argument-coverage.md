@@ -8,6 +8,8 @@ The six-step wizard now defaults to the complete Advanced form. Database identit
 
 Literal CLI labels sit beside controls. Compatibility aliases route to their equivalent choices; --type is fixed to Laravel and --bind-local is always enforced. Informational actions have separate generated commands inside the wizard; deployment dry-run/config export remain part of its final output. No lifecycle/Kubernetes arguments are forwarded into deployment.
 
+Final deployment output presents Bash, direct Docker, Python native and Python Docker commands simultaneously with independent copy actions. The preferred runner still controls dry-run/config/management output. Each alternative goes through the same deployment validation plus its own execution/mount/image checks; unavailable variants show reasons and a link back to settings. Native databases never receive a substituted Docker command. Config contents and deployment arguments remain shared across compatible variants.
+
 | Capability | Website location and behavior |
 | --- | --- |
 | New Laravel version | Basic offers 13.0/12.0. Advanced accepts an upstream-compatible X.Y constraint, minimum 12.0. This is syntax validation, not a claim that every entered release exists. Existing applications retain their dependencies. |

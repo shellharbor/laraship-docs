@@ -82,6 +82,10 @@
 @media(max-width:720px){.cli-section{margin-left:20px;margin-right:20px;padding:24px 18px}.cli-section h2{font-size:27px}.argument-list,.tools-field-grid,.reference-filters{grid-template-columns:minmax(0,1fr)}.cli-section details,.execution-settings{padding:13px}.argument-list summary code{font-size:11px}}
 
 .execution-settings .hint{color:#405844}
+.deployment-commands{min-width:0}.deployment-commands>p{font-size:13px;line-height:1.8;color:#405844}
+.deployment-variant{min-width:0;border:1px solid var(--line);border-radius:8px;padding:16px;margin:18px 0}.deployment-variant.selected{border-color:#679356;background:#f7faf3}
+.deployment-variant h5{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:0 0 14px;font-size:15px}.deployment-variant .code-block{margin-bottom:0}.deployment-variant .notice{margin-bottom:0}
+@media(max-width:720px){.deployment-variant{padding:12px 8px}.deployment-variant .code-toolbar{flex-wrap:wrap;gap:10px}}
 .wizard-mode-note{font-size:13px;line-height:1.8;color:#405844;margin:-8px 0 20px}
 .wizard-argument-finder{border:1px solid var(--line);background:#f6f9f2;border-radius:8px;padding:18px;margin-bottom:24px;min-width:0}
 .wizard-argument-finder>label{display:block;font-size:13px;font-weight:600;margin-bottom:8px}

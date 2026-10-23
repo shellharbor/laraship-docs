@@ -36,7 +36,7 @@ test('Python installation and final callbacks share settings across all runners 
   const output = wizard(page);
   for (const [name, mode] of [['Python CLI · native', 'python-native'], ['Python CLI · Docker', 'python-docker'], ['Docker image', 'docker'], ['Bash script', 'bash']]) {
     await output.getByRole('radio', { name, exact: true }).first().check();
-    const code = output.locator('.code-block').filter({ hasText: `${mode} · deploy` });
+    const code = output.locator(`.deployment-variant[data-runner="${mode}"] .code-block`);
     await expect(code).toContainText("--on-complete '/opt/laraship-hooks/notify.sh'");
     await expect(code).toContainText("--completion-token-file '/root/laraship-api.token'");
     await expect(code).toContainText("--completion-timeout '45'");
@@ -74,7 +74,7 @@ test('Python Docker falls back to Python native for a host database and translat
   await result(page);
   await expect(wizard(page).getByRole('radio', { name: 'Python CLI · native', exact: true }).first()).toBeChecked();
   await expect(wizard(page).getByRole('radio', { name: 'Python CLI · Docker', exact: true }).first()).toBeDisabled();
-  await expect(wizard(page).locator('.code-block').filter({ hasText: 'python-native · deploy' })).toContainText('--db-native');
+  await expect(wizard(page).locator('.deployment-variant[data-runner="python-native"] .code-block')).toContainText('--db-native');
   await page.getByRole('button', { name: 'EN / RU: Switch to Russian' }).click();
   await page.getByRole('button', { name: /Параметры/ }).click();
   await page.getByText('Интеграции', { exact: true }).click();
@@ -120,7 +120,7 @@ for (const primary of ['admin-panel', 'api'] as const) {
     await expect(page.getByRole('checkbox', { name: /^HTTP Basic Auth/ })).toBeChecked();
     await expect(page.getByRole('checkbox', { name: /^HTTP Basic Auth/ })).toBeDisabled();
     await page.getByRole('button', { name: 'Review configuration' }).click();
-    const command = wizard(page).locator('.code-block').filter({ hasText: `${primary === 'api' ? 'docker' : 'bash'} · deploy` });
+    const command = wizard(page).locator(`.deployment-variant[data-runner="${primary === 'api' ? 'docker' : 'bash'}"] .code-block`);
     await expect(command).toContainText(`--preset '${primary}'`);
     await expect(command).toContainText("--preset 'staging'");
     await expect(command).toContainText('--enable-basic-auth');
@@ -193,7 +193,7 @@ test('installation, Docker CLI commands, config mounts, language and accessibili
   await next(page); await identity(page); await next(page); await result(page);
   const output = wizard(page);
   await expect(output.getByRole('radio', { name: 'Docker image', exact: true }).first()).toBeChecked();
-  const deploy = output.locator('.code-block').filter({ hasText: 'docker · deploy' });
+  const deploy = output.locator('.deployment-variant[data-runner="docker"] .code-block');
   const preview = output.locator('.code-block').filter({ hasText: 'docker · dry-run' });
   await expect(deploy).toContainText('sudo docker run --rm -it --network host');
   await expect(deploy).toContainText('src=/var/run/docker.sock,dst=/var/run/docker.sock');
@@ -210,7 +210,7 @@ test('installation, Docker CLI commands, config mounts, language and accessibili
   await checkAccessibility(page);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await output.getByRole('radio', { name: 'Bash script', exact: true }).first().check();
-  await expect(output.locator('.code-block').filter({ hasText: 'bash · deploy' })).toContainText('sudo bash /opt/laraship/deploy-laravel.sh');
+  await expect(output.locator('.deployment-variant[data-runner="bash"] .code-block')).toContainText('sudo bash /opt/laraship/deploy-laravel.sh');
   await expect(installation.getByRole('radio', { name: 'Bash script' })).toBeChecked();
 });
 test('native PostgreSQL forces Bash while Docker remains a separate installation option', async ({ page }) => {
@@ -221,8 +221,8 @@ test('native PostgreSQL forces Bash while Docker remains a separate installation
   await expect(wizard(page).getByRole('radio', { name: 'Docker image', exact: true }).first()).toBeDisabled();
   await expect(wizard(page).getByRole('radio', { name: 'Bash script', exact: true }).first()).toBeChecked();
   await expect(wizard(page)).toContainText('Native databases use Bash or Python CLI with the native backend');
-  await expect(wizard(page).locator('.code-block').filter({ hasText: 'bash · deploy' })).toContainText('--db-native');
-  await expect(wizard(page).locator('.code-block').filter({ hasText: 'docker · deploy' })).toHaveCount(0);
+  await expect(wizard(page).locator('.deployment-variant[data-runner="bash"] .code-block')).toContainText('--db-native');
+  await expect(wizard(page).locator('.deployment-variant[data-runner="docker"] .code-block')).toHaveCount(0);
 });
 test('minimal PostgreSQL, copied command, export, reload and accessibility', async ({ page, context }, info) => {
   const externalRequests: string[] = [];
@@ -230,7 +230,7 @@ test('minimal PostgreSQL, copied command, export, reload and accessibility', asy
   await expect(page).toHaveTitle(/LaraShip/);
   await page.getByRole('link', { name: 'Configure your deployment', exact: true }).click();
   await next(page); await identity(page); await next(page); await result(page);
-  const command = wizard(page).locator('.code-block').filter({ hasText: 'bash · deploy' });
+  const command = wizard(page).locator('.deployment-variant[data-runner="bash"] .code-block');
   await expect(command).toContainText("--db-type 'postgres'");
   await expect(command).not.toContainText('--db-native');
   await expect(command).not.toContainText('--with');
@@ -276,7 +276,7 @@ test('presets lock additive modules and source change removes incompatible modul
   await next(page); await expect(page.getByRole('alert')).toContainText('without embedded credentials');
   await page.getByLabel('Repository URL', { exact: true }).fill('https://github.com/acme/app.git');
   await next(page); await next(page); await result(page);
-  const command = wizard(page).locator('.code-block').filter({ hasText: 'bash · deploy' });
+  const command = wizard(page).locator('.deployment-variant[data-runner="bash"] .code-block');
   await expect(command).toContainText('--repo'); await expect(command).not.toContainText('--laravel-version');
   await expect(command).not.toContainText('filament');
 });
