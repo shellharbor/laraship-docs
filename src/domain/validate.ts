@@ -67,10 +67,11 @@ export function validate(config: WizardConfig): Issue[] {
     const value = e.ports[name];
     if (!value) continue;
     const port = +value;
-    if (!/^\d{1,5}$/.test(value) || port < 1 || port > 65535) add(`port-${name}`, 'port', 'Use a whole port number from 1 to 65535.', 4);
-    if (seen.has(port)) add(`port-${name}`, 'duplicate-port', 'Explicit ports must be different.', 4);
+    const step = name === e.dbType ? 2 : 4;
+    if (!/^\d{1,5}$/.test(value) || port < 1 || port > 65535) add(`port-${name}`, 'port', 'Use a whole port number from 1 to 65535.', step);
+    if (seen.has(port)) add(`port-${name}`, 'duplicate-port', 'Explicit ports must be different.', step);
     seen.add(port);
-    if (!(name === e.dbType && e.dbLocation === 'native') && [80, 443].includes(port)) add(`port-${name}`, 'reserved-port', '80 and 443 are reserved for the shared proxy.', 4);
+    if (!(name === e.dbType && e.dbLocation === 'native') && [80, 443].includes(port)) add(`port-${name}`, 'reserved-port', '80 and 443 are reserved for the shared proxy.', step);
   }
   if (e.endpoint) {
     try {

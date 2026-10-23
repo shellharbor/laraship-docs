@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Recheck lint, 241 unit tests, strict TypeScript/build and dependency advisories before the user-authorized full-form publication through the existing GitHub Pages workflow.
+- Make the complete wizard form the default; expose database names/users/ports and service identity/template choices in their own steps with literal CLI flag labels.
+- Add in-wizard argument search with preserved selections, shared runner/execution controls and informational CLI commands; keep Basic optional and restore full mode on Clear data.
+- Route database port errors to the Database step and avoid duplicate execution-input IDs when the shared settings are shown in both Installation and the wizard.
+
 - Recheck lint, 236 unit tests, production build and dependency advisories before publishing the complete-argument update through the existing GitHub Pages workflow.
 
 - Complete the LaraShip argument audit with a searchable public reference for all CLI namespaces, aliases and configuration keys.

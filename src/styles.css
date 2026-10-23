@@ -82,3 +82,14 @@
 @media(max-width:720px){.cli-section{margin-left:20px;margin-right:20px;padding:24px 18px}.cli-section h2{font-size:27px}.argument-list,.tools-field-grid,.reference-filters{grid-template-columns:minmax(0,1fr)}.cli-section details,.execution-settings{padding:13px}.argument-list summary code{font-size:11px}}
 
 .execution-settings .hint{color:#405844}
+.wizard-mode-note{font-size:13px;line-height:1.8;color:#405844;margin:-8px 0 20px}
+.wizard-argument-finder{border:1px solid var(--line);background:#f6f9f2;border-radius:8px;padding:18px;margin-bottom:24px;min-width:0}
+.wizard-argument-finder>label{display:block;font-size:13px;font-weight:600;margin-bottom:8px}
+.wizard-argument-finder>input{display:block;width:100%;max-width:560px;min-height:44px;border:1px solid #b7c6b1;border-radius:6px;padding:10px 12px;color:var(--green);background:#fff;font:inherit;font-size:13px}
+.wizard-argument-finder .hint,.wizard-argument-matches>p{font-size:12px;line-height:1.8;color:#405844;margin:10px 0 0}
+.wizard-argument-matches{display:grid;gap:8px;margin-top:12px}.wizard-argument-matches>button{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;width:100%;border:1px solid var(--line);border-radius:6px;background:#fff;padding:12px;text-align:left;color:var(--green);cursor:pointer}
+.wizard-argument-matches>button code{font-size:12px;overflow-wrap:anywhere}.wizard-argument-matches>button span{grid-column:1;line-height:1.7;font-size:12px}.wizard-argument-matches>button small{grid-column:2;grid-row:1;font-size:11px}
+.wizard-settings{min-width:0;border:1px solid var(--line);border-radius:8px;padding:18px;margin:20px 0}.wizard-settings legend{padding:0 6px;font-size:13px;font-weight:600}.wizard-settings>summary{font-size:13px;font-weight:600;cursor:pointer}
+.cli-flags{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 10px!important}.cli-flags code{font:11px/1.6 monospace;background:#edf4e8;border:1px solid #ccd9c4;border-radius:4px;padding:1px 6px;color:#315443;overflow-wrap:anywhere}
+.toggle-setting>.cli-flags{padding-left:28px}.argument-jump-note{font-size:12px;line-height:1.9;color:#345341;background:#f0f7e9;border-left:3px solid #477447;padding:12px;overflow-wrap:anywhere}.argument-highlight{outline:2px solid #477447;outline-offset:6px;border-radius:4px}
+@media(max-width:720px){.wizard-settings{padding:14px 12px}.wizard-argument-finder{padding:14px}.wizard-argument-matches>button{gap:5px}.wizard-argument-matches>button small{grid-column:1;grid-row:3}.wizard-mode-note{font-size:12px}}

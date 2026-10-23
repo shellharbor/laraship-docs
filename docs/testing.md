@@ -1,6 +1,6 @@
 # Verification report
 
-Local verification: 2026-10-23, Windows, Node.js 24.17.0/npm 11.13.0, Git Bash, Chromium 156 through Playwright 1.64.1. Optional Docker checks used client/daemon 29.9.2 and context desktop-linux (Linux amd64 daemon); Docker Desktop 4.96.2 was previously verified. Public fixture identities and domains are synthetic. No real passwords or infrastructure credentials were used. The complete-argument enhancement checks below are local; they do not establish publication of these changes.
+Local verification: 2026-10-23, Windows, Node.js 24.17.0/npm 11.13.0, Git Bash, Chromium 156 through Playwright 1.64.1. Optional Docker checks used client/daemon 29.9.2 and context desktop-linux (Linux amd64 daemon); Docker Desktop 4.96.2 was previously verified. Public fixture identities and domains are synthetic. No real passwords or infrastructure credentials were used. This report records the complete-form publication preflight. A successful workflow for its commit and separate hosted verification are required to establish publication; local checks alone do not establish it.
 
 ## Checks
 
@@ -8,13 +8,13 @@ Local verification: 2026-10-23, Windows, Node.js 24.17.0/npm 11.13.0, Git Bash, 
 | --- | --- |
 | Strict TypeScript and production Vite build | Passed; static dist/, no backend or Docker runtime |
 | ESLint | Passed |
-| Vitest unit tests | 236 passed; 34 Bash and 42 Docker integrations deliberately skipped in the ordinary command |
-| Pinned upstream checks | 34 passed: all namespace parser/reference coverage, deploy registry/help, 26 scenarios as argv/config, SSH key-path existence and 5 real Bash quoting/config round trips |
-| Published Docker CLI checks | 42 passed: OCI identity, deployment/config scenarios, 26 audited file hashes, Python/completion previews, 8 extracted lifecycle parser cases, 2 offline Kubernetes renders and generated Compose validation |
-| Browser/axe | All 36 cases covered: full run passed 34; both reference cases then passed on a focused desktop/mobile rerun after harness fixes. Zero axe violations in checked states |
+| Vitest unit tests | 241 passed; 34 Bash and 42 Docker integrations deliberately skipped in the ordinary command |
+| Pinned upstream checks | Previous argument-release verification, unchanged argv contract: 34 passed: all namespace parser/reference coverage, deploy registry/help, 26 scenarios as argv/config, SSH key-path existence and 5 real Bash quoting/config round trips |
+| Published Docker CLI checks | Previous argument-release verification, unchanged image/argv inputs: 42 passed: OCI identity, deployment/config scenarios, 26 audited file hashes, Python/completion previews, 8 extracted lifecycle parser cases, 2 offline Kubernetes renders and generated Compose validation |
+| Browser/axe | Complete-form suite has 42 cases. Full run: 39 passed; three old selector/timing failures were corrected. All 10 focused final rerun cases passed, covering the corrected scenarios and all six new form journeys. This is coverage across runs, not one full 42-case success; evidence is in tmp/full-wizard-final/. Zero axe violations in checked form states |
 | Production project Pages path | Passed for /fixture-repo/: asset responses, direct opening, refresh, desktop/mobile overflow, canonical, robots/sitemap and .nojekyll |
-| npm audit --audit-level=low | Release preflight on 2026-10-23: 0 reported vulnerabilities, including development dependencies; dependency lockfile unchanged |
-| Visual inspection | Desktop/mobile argument-enhancement Kubernetes screenshots inspected, plus previous completion/preset coverage. Checked states have no horizontal page overflow |
+| npm audit --audit-level=low | Repeated for the complete-form publication preflight on 2026-10-23: 0 reported vulnerabilities, including development dependencies; dependency lockfile unchanged |
+| Visual inspection | Desktop/mobile full Database and execution forms inspected; literal CLI labels, identities, conditional templates and field highlighting are readable. Checked states have no horizontal page overflow |
 
 The browser suite covers minimal PostgreSQL, native MySQL template handling, presets, source transitions, existing-repo credential rejection, Horizon/Redis dependencies, custom port conflicts, endpoint consent, clipboard, config download, opt-in storage, Clear data, keyboard focus and English/Russian UI. Added journeys exercise the visible installation guide, image setup, shared runner selection, Docker preview/deploy/management/config, config download and native PostgreSQL fallback. Unit tests also reject native MySQL with Docker. Axe checks landing/wizard and final results on both viewport classes. Automated axe checks do not establish complete WCAG conformance or replace assistive-technology testing.
 
@@ -94,6 +94,14 @@ The last full 36-case browser run passed 34 cases; the two reference cases hit W
 Image impact was reassessed: no build inputs changed, no rebuild/pull was needed. After all 42 image checks, zero labeled test containers/volumes remained. This task created no volumes/build caches (owned storage 0 bytes); shared builder cache was inspected and preserved. Ignored storage receipts are in tmp/docker-audit/arguments-{storage,builder}.txt.
 
 Self-review covered all changed generators/forms, actual parser namespaces, shell/CSV/YAML quoting, optional argument applicability, custom paths/image trust, destructive intent, secret templates, export, preference exclusions and reset behavior. Independent delegation was not authorized. Fresh Ubuntu install/provisioning, custom administrative images, remote Git access, real database lifecycle operations and cluster deployment remain unverified.
+
+## Complete wizard form (local only)
+
+The wizard defaults to its full Advanced mode, retains an optional Basic view and resets to the full view. Every long deployment argument has a route in src/data/wizardArguments.ts; aliases/fixed values and informational commands are distinguished from deployment fields. Database names/users/ports and password templates are directly editable on Database, service identity/templates on Services, and Basic Auth/network/integration/runner/path/image/archive/mount settings in Fine-tuning. Search highlights and focuses applicable fields without changing source, database, module selection or trust. Validation sends database-port errors to step 2. Shared settings use unique textarea IDs. Search jumping forward does not mark invalid earlier steps complete. Highlighting is refreshed when the engine changes so a PostgreSQL search cannot leave a MySQL field highlighted; both viewport regressions passed separately in tmp/full-wizard-engine-final/.
+
+Five new unit cases verify exhaustive routing, namespace boundaries, aliases, adapter locations and DB-port error placement. Six new browser journeys (three per viewport) exercise exact PostgreSQL identity/port output in Bash/Docker and exported config, invalid-port rejection at its field, MySQL root restrictions/native templates, preserved per-engine inputs, Basic/full mode search, optional storage privacy, Clear data/Russian UI, in-wizard execution settings and inspection copy without form submission. Axe and overflow are checked. Initial new-test language failure was an English region-name locator after switching Russian, corrected to the stable wizard container. Existing preset matching was tightened to distinguish the module from its now-visible password template; removed clicks targeted disclosures that are now always-visible fieldsets. The longer ports/consent journey has a bounded 60-second limit. Assertions and consent checks were preserved.
+
+No dependency or container inputs changed. CLI argv/config generation is unchanged; 34 upstream and 42 offline image checks from the preceding argument release remain applicable and were not repeated for field placement. Current lint, strict TypeScript, unit/build and production Pages-path checks are recorded above. Source/image pins remain 1.3.0/4dfec97 and the same immutable digest. No infrastructure action or real secret was used. Desktop/mobile screenshots are in tmp/full-wizard-evidence/. The refinement was initially kept local as requested; the user subsequently authorized its commit, push and GitHub Pages publication. Lint, all 241 unit tests, strict TypeScript/build and dependency audit passed again before that publication. Workflow and hosted evidence are retained separately under ignored tmp/releases/.
 
 ## GitHub publication
 

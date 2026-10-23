@@ -30,7 +30,7 @@ Production files are in `dist/`. No Docker image is required or supplied by this
 - PostgreSQL 17 or MySQL 8.4, in Docker or native on the same Ubuntu host.
 - HTTPS by default; optional HTTP, Filament, Redis integration, queue worker, Horizon and database backups.
 - Multiple compatible admin-panel/api/staging presets; automatic dependencies and explained conflict blocks.
-- Advanced names/users, host ports, Basic Auth user, PHP upload limits, project ZIP, project DH parameters, HTTPS endpoint and an explicitly acknowledged Expert hook.
+- Full wizard fields by default: database names/users/ports, Basic Auth identity, PHP upload limits, project ZIP/DH parameters, endpoints and an explicitly acknowledged Expert hook. Basic mode is optional.
 - Final completion reports via trusted script and/or HTTPS POST, private token-file paths, bounded timeout and explicit application-password sharing.
 - Deterministic quoted deploy/dry-run commands and a local `deploy.config` download.
 - Visible English/Russian installation guide and a shared Bash, Docker image, Python native or Python Docker runner choice. Runner choice is held in memory only.
@@ -83,6 +83,8 @@ Optional persistent storage contains only an allowlist of stack preferences, not
 The browser validates syntax and compatibility, not DNS, ACME, SSH keys, hook/token ownership or permissions, open ports, Ubuntu packages or database connectivity. Native databases must already be installed and configured for Docker access. Existing repositories need `artisan` and `composer.json` at their root and prebuilt frontend assets. A deployment refuses an existing project directory.
 
 ## Complete arguments and operations
+
+The wizard opens in **Advanced** mode with every applicable deployment setting. The **Database** step directly edits PostgreSQL/MySQL names, application users and ports with literal flag labels such as `--db-postgres-user`; empty values retain server generation. Password-template choices sit with their database, service or Basic Auth settings. **Fine-tuning** also contains the runner, execution paths/image/archive/read-only inputs and CLI inspection. Search **Find a setting by CLI argument** to jump to a field without changing your database/module/source selections. Basic remains an optional shorter view and preserves entered values.
 
 The public **Arguments** section searches all 102 entries across deployment, lifecycle, Python and Kubernetes, including aliases, config keys, defaults and pinned source links. See the [coverage map](docs/argument-coverage.md).
 

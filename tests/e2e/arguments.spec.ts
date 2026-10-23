@@ -50,11 +50,11 @@ test('server secret templates, HTTP opt-in and execution paths reach all generat
   await page.getByLabel('Project slug', { exact: true }).fill('argument-app');
   await page.getByLabel('Domain', { exact: true }).fill('app.example.com');
   await page.getByLabel('Certificate contact email').fill('operator@example.com');
-  await next(page); await next(page); await next(page);
-  await page.getByText('Custom passwords — server-side templates', { exact: true }).click();
+  await next(page);
   await wizard(page).getByRole('checkbox', { name: /^PostgreSQL password/ }).check();
+  await next(page);
   await wizard(page).getByRole('checkbox', { name: /^Redis password/ }).check();
-  await page.getByText('Integrations', { exact: true }).click();
+  await next(page);
   await page.getByRole('checkbox', { name: /^Allow unencrypted HTTP endpoints/ }).check();
   await page.getByRole('checkbox', { name: /^Deployment completion notification/ }).check();
   await page.getByLabel('Completion API URL').fill('http://api.example.com/final');

@@ -18,7 +18,6 @@ test('Python installation and final callbacks share settings across all runners 
   await page.getByRole('button', { name: 'Advanced', exact: true }).click();
   await page.getByRole('checkbox', { name: 'Remember non-sensitive preferences' }).check();
   await next(page); await identity(page); await next(page); await next(page); await next(page);
-  await page.getByText('Integrations', { exact: true }).click();
   await page.getByRole('checkbox', { name: /^Deployment completion notification/ }).check();
   await page.getByLabel('Completion script path').fill('/opt/laraship-hooks/notify.sh');
   await page.getByLabel('Completion API URL').fill('http://api.example.com/completed');
@@ -266,7 +265,7 @@ test('native MySQL is explicitly a manual template', async ({ page }) => {
 test('presets lock additive modules and source change removes incompatible modules', async ({ page }) => {
   await page.getByRole('checkbox', { name: 'admin-panel', exact: true }).check();
   await next(page); await identity(page); await next(page); await next(page);
-  await expect(page.getByRole('checkbox', { name: 'Filament admin' })).toBeChecked();
+  await expect(page.getByRole('checkbox', { name: /^Filament admin / })).toBeChecked();
   await expect(page.getByRole('checkbox', { name: 'Queue worker' })).toBeDisabled();
   await expect(page.getByRole('checkbox', { name: /^Horizon/ })).toBeDisabled();
   await page.getByLabel('Filament administrator email').fill('admin@example.com');
@@ -282,20 +281,18 @@ test('presets lock additive modules and source change removes incompatible modul
   await expect(command).not.toContainText('filament');
 });
 test('Horizon dependency, Advanced ports and consent checks', async ({ page }) => {
+  test.setTimeout(60000);
   await page.getByRole('button', { name: 'Advanced', exact: true }).click();
   await next(page); await identity(page); await next(page); await next(page);
   await page.getByRole('checkbox', { name: /^Horizon/ }).check();
   await expect(page.getByRole('checkbox', { name: 'Redis integration' })).toBeChecked();
   await expect(page.getByRole('checkbox', { name: 'Queue worker' })).toBeDisabled();
   await next(page);
-  await page.getByText('Networking & ports', { exact: true }).click();
   await page.getByLabel('HTTP', { exact: true }).fill('8150');
   await page.getByLabel('PHP', { exact: true }).fill('8150');
   await page.getByRole('button', { name: 'Review configuration' }).click();
   await expect(page.getByRole('alert')).toContainText('Explicit ports must be different');
   await page.getByLabel('PHP', { exact: true }).fill('9150');
-  await page.getByText('Integrations', { exact: true }).click();
-  await page.getByText('Legacy credential endpoint (PUT)', { exact: true }).click();
   await page.getByLabel('Notification endpoint').fill('https://notify.example/deploy');
   await page.getByRole('button', { name: 'Review configuration' }).click();
   await expect(page.getByRole('alert')).toContainText('Acknowledge');

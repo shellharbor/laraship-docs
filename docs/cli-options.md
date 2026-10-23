@@ -2,6 +2,8 @@
 
 Revision: 4dfec97ae4c227fe35cf84f5ac5b5e65b18a1c30. Generated from src/data/upstream.ts.
 
+The wizard defaults to the complete Advanced form. Availability describes option complexity or a server-only template, not a separate documentation-only implementation. Basic is an optional shorter view. See [wizard field locations](argument-coverage.md).
+
 | Flag | Type / values | Default | Availability | Dependencies | Description / source |
 | --- | --- | --- | --- | --- | --- |
 | `--slug` | value: ^[A-Za-z0-9][A-Za-z0-9_-]*$; not nginxproxy (case-insensitive) | random; prepended to domain | basic | Required in wizard | [Project folder and container prefix](https://github.com/shellharbor/laraship/blob/4dfec97ae4c227fe35cf84f5ac5b5e65b18a1c30/deploy-laravel.sh) |
