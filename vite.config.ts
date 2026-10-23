@@ -8,6 +8,7 @@ if (siteUrl && !/^https:\/\/[A-Za-z0-9.-]+(?:\/[^\s<>"']*)?$/.test(siteUrl)) {
 
 export default defineConfig({
   base: process.env.BASE_PATH || '/',
+  server: { watch: { ignored: ['**/tmp/**', '**/test-results/**', '**/playwright-report/**', '**/dist/**'] } },
   plugins: [react(), {
     name: 'site-metadata',
     transformIndexHtml(html) {

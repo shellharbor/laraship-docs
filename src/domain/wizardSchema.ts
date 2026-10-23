@@ -1,11 +1,13 @@
+import type { SecretOption } from './secrets';
 export type ModuleName = 'filament' | 'redis' | 'queue' | 'horizon' | 'backup';
 export type PresetName = 'admin-panel' | 'api' | 'staging';
 export type PortName = 'http' | 'https' | 'php' | 'redis' | 'postgres' | 'mysql';
 export interface WizardConfig {
   source: 'new' | 'existing';
-  laravelVersion: '13.0' | '12.0';
+  laravelVersion: string;
   presets: PresetName[];
   repo: string;
+  additionalRepoTransports: boolean;
   branch: string;
   deployKey: string;
   slug: string;
@@ -38,9 +40,12 @@ export interface WizardConfig {
   completionIncludeSecrets: boolean;
   completionScriptConsent: boolean;
   completionEndpointConsent: boolean;
+  customSecrets: SecretOption[];
+  allowInsecureEndpoint: boolean;
+  insecureEndpointConsent: boolean;
 }
 export const initialConfig: WizardConfig = {
-  source: 'new', laravelVersion: '13.0', presets: [], repo: '', branch: '', deployKey: '',
+  source: 'new', laravelVersion: '13.0', presets: [], repo: '', additionalRepoTransports: false, branch: '', deployKey: '',
   slug: '', domain: '', https: true, sslEmail: '', dbType: 'postgres', dbLocation: 'docker',
   dbNames: { postgres: { name: '', user: '' }, mysql: { name: '', user: '' } },
   modules: [], filamentEmail: '', filamentName: '', backupKeep: '7', basicAuth: false,
@@ -49,5 +54,6 @@ export const initialConfig: WizardConfig = {
   expert: false, postDeploy: '', postDeployConsent: false,
   completionEnabled: false, onComplete: '', completionEndpoint: '', completionTokenFile: '', completionTimeout: '30',
   completionIncludeSecrets: false, completionScriptConsent: false, completionEndpointConsent: false,
+  customSecrets: [], allowInsecureEndpoint: false, insecureEndpointConsent: false,
 };
 export interface Issue { field: string; code: string; message: string; step: number }

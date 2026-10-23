@@ -76,11 +76,19 @@ The old `--post-deploy` remains an application setup command inside PHP and repe
 
 ## Secrets and validation boundary
 
-There are no password fields. LaraShip generates secrets on the server. **Native MySQL needs its existing root password**: the wizard produces a clearly marked template containing `<MYSQL_ROOT_PASSWORD>` and offers a Bash hidden-input snippet to use on the server. The underlying CLI still exposes that password in process arguments; hidden input does not solve `ps` visibility. Never paste it into this website. Protect LaraShip terminal output because it prints generated credentials.
+There are no actual password fields. LaraShip generates secrets on the server by default. Optional Fine-tuning password choices produce templates for PostgreSQL, MySQL app/container-root, Redis, Filament and Basic Auth. **Native MySQL separately needs its existing host root password**. Output/config retain clearly marked placeholders, and a Bash hidden-input helper fills them privately on the server. The CLI still exposes passwords in process arguments; hidden input does not solve `ps` visibility. Never paste secrets into this website. Protect LaraShip terminal output because it prints credentials.
 
 Optional persistent storage contains only an allowlist of stack preferences, not emails, domain/slug, repository URL, key path, endpoint, commands or passwords. It is off by default; Clear data resets everything. Config export includes entered non-password settings and can include a sensitive URL/hook: review it, keep it out of Git and use `chmod 600`. Do not source the config as shell code.
 
 The browser validates syntax and compatibility, not DNS, ACME, SSH keys, hook/token ownership or permissions, open ports, Ubuntu packages or database connectivity. Native databases must already be installed and configured for Docker access. Existing repositories need `artisan` and `composer.json` at their root and prebuilt frontend assets. A deployment refuses an existing project directory.
+
+## Complete arguments and operations
+
+The public **Arguments** section searches all 102 entries across deployment, lifecycle, Python and Kubernetes, including aliases, config keys, defaults and pinned source links. See the [coverage map](docs/argument-coverage.md).
+
+Advanced adds custom Laravel X.Y constraints, optional HTTP/git/local-file repository transports and explicit HTTP endpoint support with separate acknowledgement. Installation → Execution paths controls toolkit/config paths, trusted versioned CLI image overrides, Docker/native archive directories and additional read-only inputs. These settings are memory-only.
+
+**Operations** generates inventory, update, database dump/restore, activate/deactivate and removal commands with the arguments each accepts. Kubernetes render/deploy has a separate form, application image and target context; it uses no Compose server mounts or root execution. Results also offer a finite one-off Docker Compose tools service. The site generates commands; it executes none of these operations.
 
 ## Browser and upstream checks
 
@@ -101,6 +109,8 @@ npm run test:upstream
 ```
 
 On Windows, install Git Bash or set `BASH_BIN` to its executable. `LARASHIP_UPSTREAM_DIR` can select an already reviewed checkout. Without the explicit upstream command, its tests are skipped. Ordinary unit tests do not fetch or execute upstream code. Regenerate `docs/cli-options.md` with `node scripts/write-cli-reference.mjs` after intentional registry edits.
+
+Local browser checks default to port 4173. If another project owns it, use a free dedicated port, for example `$env:LARASHIP_TEST_PORT='4175'` in PowerShell before `npm run test:e2e`. Tests check the LaraShip page title before interacting; do not stop another project's server. Generated build/test-report directories are excluded from development file watching.
 
 Optional published-image checks require Docker client/daemon, the source fixture above and the exact image already pulled after review:
 

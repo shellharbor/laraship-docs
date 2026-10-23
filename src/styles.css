@@ -67,3 +67,18 @@
 @media(max-width:1320px){.release-note{margin-left:45px;margin-right:45px}}
 @media(max-width:1050px){.release-note{margin-left:28px;margin-right:28px}}
 @media(max-width:720px){.release-note{margin-left:20px;margin-right:20px;flex-wrap:wrap;gap:10px;padding:16px}.release-note p{flex-basis:100%}.compact .runner-options{grid-template-columns:minmax(0,1fr)}}
+
+.cli-section{max-width:1240px;margin:48px auto;padding:32px 28px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.cli-section h2{margin:15px 0 18px}.cli-section>p,.tool-form>p{font-size:13px;color:#54684c;line-height:1.8}
+.cli-section details,.execution-settings{border:1px solid var(--line);border-radius:7px;padding:16px;margin:14px 0}
+.cli-section summary,.execution-settings>summary{font-size:13px;font-weight:600;line-height:1.7;cursor:pointer}
+.cli-section details p,.cli-section details dd,.execution-settings p{font-size:12px;line-height:1.8;overflow-wrap:anywhere}
+.cli-section details summary+*{margin-top:18px}.tool-tabs{display:flex;gap:12px;flex-wrap:wrap;margin:24px 0}.tool-tabs button[aria-pressed=true]{background:#eef5e6;border-color:#679356}
+.tool-form{padding-top:15px}.tools-field-grid,.reference-filters{display:grid;grid-template-columns:1fr 1fr;gap:0 22px}.tool-form>.code-block{margin-top:24px}
+.argument-list{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}.argument-list details{margin:0;min-width:0}.argument-list summary{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:space-between;list-style:inside}.argument-list summary code{overflow-wrap:anywhere;max-width:100%;font-size:12px}.argument-list summary span{font-size:11px;color:#54684c}.argument-list dl>div{display:grid;grid-template-columns:90px minmax(0,1fr);gap:10px;margin-bottom:10px}.argument-list dt{font-size:11px;color:#54684c}.argument-list dd{margin:0}
+.field textarea{width:100%;border:1px solid #d3ded0;border-radius:6px;padding:12px;background:white;color:var(--green);font:inherit;font-size:13px;resize:vertical}
+@media(max-width:1320px){.cli-section{margin-left:45px;margin-right:45px}}
+@media(max-width:1050px){.cli-section{margin-left:28px;margin-right:28px}.site-header nav{gap:16px}}
+@media(max-width:720px){.cli-section{margin-left:20px;margin-right:20px;padding:24px 18px}.cli-section h2{font-size:27px}.argument-list,.tools-field-grid,.reference-filters{grid-template-columns:minmax(0,1fr)}.cli-section details,.execution-settings{padding:13px}.argument-list summary code{font-size:11px}}
+
+.execution-settings .hint{color:#405844}

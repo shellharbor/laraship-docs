@@ -8,6 +8,9 @@ import { generate } from '../src/domain/generate';
 import { bindMount } from '../src/domain/runner';
 import { shellQuote } from '../src/domain/shellQuote';
 import { scenario, scenarios } from './scenarios';
+import { defaultKubernetes, generateKubernetes } from '../src/domain/kubernetes';
+import { defaultOperation, generateOperation, type OperationConfig } from '../src/domain/operations';
+import { composeTool } from '../src/domain/compose';
 
 const enabled = process.env.LARASHIP_DOCKER_TEST === '1';
 const label = `io.shellharbor.laraship-docs.test=${process.env.LARASHIP_DOCKER_TEST_RUN}`;
@@ -16,6 +19,50 @@ function run(args: string[], options: string[] = []) {
     { encoding: 'utf8', timeout: 30000 }).replace(/\u001b\[[0-9;]*m/g, '');
 }
 describe.skipIf(!enabled)('published immutable Docker CLI', () => {
+  it.each([false, true])('renders actual Kubernetes JSON offline with worker=%s, without a cluster or socket', worker => {
+    const result = generateKubernetes({ ...defaultKubernetes, name: 'shop', namespace: 'shop', configmap: 'shop-config', secret: 'shop-secret', revision: 'release-1',
+      image: 'registry.example.com/shop:1.0', replicas: '3', worker, imagePullSecret: 'registry', readinessPath: '/health_ready', context: 'not-contacted' });
+    const document = JSON.parse(run(['kubernetes', ...result.argv], ['--user', '1000:1000', '--read-only', '--tmpfs', '/tmp']));
+    expect(document.kind).toBe('List');
+    expect(document.items.map((item: { kind: string }) => item.kind)).toEqual(['Job', 'Deployment', 'Service', 'Deployment']);
+    const web = document.items.find((item: { metadata: { name: string } }) => item.metadata.name === 'shop-web');
+    expect(web.spec.replicas).toBe(3);
+    expect(web.spec.template.spec.containers[0].readinessProbe.httpGet.path).toBe('/health_ready');
+    expect(web.spec.template.spec.imagePullSecrets[0].name).toBe('registry');
+    expect(document.items.find((item: { metadata: { name: string } }) => item.metadata.name === 'shop-worker').spec.replicas).toBe(worker ? 1 : 0);
+    expect(JSON.stringify(document)).not.toContain('docker.sock');
+  });
+  it('validates the generated one-off Compose structure without starting services', () => {
+    const path = resolve('tmp/docker-configs/compose-tool.yaml');
+    mkdirSync('tmp/docker-configs', { recursive: true });
+    writeFileSync(path, composeTool(scenario()).yaml);
+    const document = JSON.parse(execFileSync('docker', ['compose', '--file', path, '--profile', 'tools', 'config', '--format', 'json'], { encoding: 'utf8', timeout: 30000 }));
+    expect(document.services.laraship.restart).toBe('no');
+    expect(document.services.laraship.command).toEqual(['--help']);
+    expect(document.services.laraship.network_mode).toBe('host');
+    expect(document.services.laraship.volumes.filter((volume: { read_only?: boolean }) => !volume.read_only)).toHaveLength(4);
+  });
+  it.each([
+    { command: 'update', noMigrate: true, reset: true, force: true, postDeployMode: 'replace', postDeploy: "printf '%s' '$literal'", codeConsent: true },
+    { command: 'update', postDeployMode: 'skip' }, { command: 'backup', action: 'now' }, { command: 'backup', action: 'list' },
+    { command: 'backup', action: 'restore', dumpFile: 'shop-1.dump', yes: true }, { command: 'activate' }, { command: 'deactivate' }, { command: 'remove', domain: 'shop.example.com' },
+  ] as Partial<OperationConfig>[])('checks only the real parser function for %j; never calls its operation', overrides => {
+    const config = { ...defaultOperation, slug: 'shop', acknowledged: true, ...overrides };
+    const result = generateOperation(config, 'bash');
+    const source = readFileSync(resolve('tmp/upstream-laraship', `${config.command}.sh`), 'utf8');
+    const parser = source.match(/^parse_args\(\) \{[\s\S]*?^\}/m)?.[0];
+    expect(parser).toBeDefined();
+    const script = `set -eu\nWWW_DIR=/tmp/operation-fixture\nSLUG='' DOMAIN='' NO_MIGRATE=false HARD_RESET=false FORCE=false POST_DEPLOY_OVERRIDE='' POST_DEPLOY_OVERRIDE_SET=false ACTION='' DUMP_FILE='' ASSUME_YES=false DB_ROOT_PASSWORD=''\nmkdir -p "$WWW_DIR/shop/.config/backup"\ntouch "$WWW_DIR/shop/.config/backup/dump.sh"\nerror() { printf '%s\\n' "$*" >&2; exit 1; }\n${parser}\nparse_args "$@"\nprintf '%s\\0' "$SLUG" "$NO_MIGRATE" "$HARD_RESET" "$FORCE" "$POST_DEPLOY_OVERRIDE" "$POST_DEPLOY_OVERRIDE_SET" "$ACTION" "$DUMP_FILE" "$ASSUME_YES" "$DOMAIN"`;
+    const output = execFileSync('docker', ['run', '--rm', '--pull', 'never', '--network', 'none', '--label', label, '--entrypoint', 'bash', CLI_IMAGE.reference, '-c', script, '--', ...result.argv], { encoding: 'utf8', timeout: 30000 }).split('\0');
+    expect(output[0]).toBe('shop');
+    if (config.command === 'update') {
+      expect(output.slice(1, 4)).toEqual([String(config.noMigrate), String(config.reset), String(config.force)]);
+      expect(output[4]).toBe(config.postDeployMode === 'skip' ? '' : config.postDeploy);
+      expect(output[5]).toBe('true');
+    }
+    if (config.command === 'backup') { expect(output[6]).toBe(config.action); expect(output[8]).toBe(String(config.yes)); }
+    if (config.command === 'remove') expect(output[9]).toBe(config.domain);
+  });
   it('has the verified identity and working informational entry points', () => {
     const image = JSON.parse(execFileSync('docker', ['image', 'inspect', CLI_IMAGE.reference], { encoding: 'utf8' }))[0];
     expect(image.Architecture).toBe('amd64');
@@ -92,7 +139,7 @@ ${runner === 'python-docker' ? "grep -Fx -- '--read-only' /tmp/adapter-arguments
     expect(output).not.toContain('SYNTHETIC_TEST_TOKEN');
   });
   it('contains the same command contracts as the audited source revision', () => {
-    const files = ['deploy-laravel.sh', 'versions.env', 'VERSION', 'list-projects.sh', 'update.sh', 'backup.sh', 'lib/runtime.sh', 'lib/proxy.sh', 'lib/endpoint.py', 'lib/completion.py', 'lib/completion.sh', 'docker-preflight.py',
+    const files = ['deploy-laravel.sh', 'versions.env', 'VERSION', 'list-projects.sh', 'update.sh', 'backup.sh', 'activate.sh', 'deactivate.sh', 'remove.sh', 'kubernetes.sh', 'kubernetes/laraship.py', 'lib/runtime.sh', 'lib/proxy.sh', 'lib/endpoint.py', 'lib/completion.py', 'lib/completion.sh', 'docker-preflight.py',
       'modules/backup.sh', 'modules/filament.sh', 'modules/horizon.sh', 'modules/queue.sh', 'modules/redis.sh',
       'presets/admin-panel.conf', 'presets/api.conf', 'presets/staging.conf'];
     // No server access: compare image contents with the existing pinned local source fixture.

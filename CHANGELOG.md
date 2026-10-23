@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Recheck lint, 236 unit tests, production build and dependency advisories before publishing the complete-argument update through the existing GitHub Pages workflow.
+
+- Complete the LaraShip argument audit with a searchable public reference for all CLI namespaces, aliases and configuration keys.
+- Add Advanced custom Laravel constraints, additional Git transports, six server-only password templates and explicit HTTP endpoint opt-in; retain storage privacy and applicable-setting validation.
+- Add shared toolkit/config/image/archive/read-only-input settings, complete lifecycle command forms, separate Kubernetes render/deploy commands and a finite Compose tools alternative.
+- Extend parser, offline Docker and desktop/mobile accessibility coverage; support an isolated local test port with a LaraShip page-identity guard and exclude generated reports/builds from development reloads.
 - Update the audited LaraShip contract and immutable Docker image to 1.3.0; add pipx/pip installation guidance and Python native/Docker command generation, management, mount validation and native-DB fallback.
 - Add final deployment completion scripts and HTTPS POST reports, private token-file paths, bounded timeout, explicit password inclusion, trust acknowledgements, bilingual lifecycle guidance and storage exclusion. Preserve application post-deploy and legacy PUT behavior.
 - Verify new runner/hook generation against source and the published image, expand desktop/mobile accessibility journeys, and improve badge contrast.

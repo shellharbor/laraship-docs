@@ -59,6 +59,7 @@ export function warnings(config: WizardConfig): string[] {
     ...(e.createBackup ? ['zip'] : []),
     ...(e.createDhparam ? ['dhparam'] : []),
     ...(e.endpoint ? ['endpoint'] : []),
+    ...(e.allowInsecureEndpoint ? ['insecure-endpoint'] : []),
     ...(e.expert && e.postDeploy ? ['post-deploy'] : []),
   ];
 }

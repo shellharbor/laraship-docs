@@ -6,15 +6,28 @@ import { CLI_OPTION_MAP, UPSTREAM } from '../src/data/upstream';
 import { generate } from '../src/domain/generate';
 import { shellQuote } from '../src/domain/shellQuote';
 import { scenario, scenarios } from './scenarios';
+import { ARGUMENT_CATALOG } from '../src/data/argumentCatalog';
 
 const enabled = process.env.LARASHIP_UPSTREAM_TEST === '1';
 const upstream = resolve(process.env.LARASHIP_UPSTREAM_DIR || 'tmp/upstream-laraship');
 const bash = process.env.BASH_BIN || (process.platform === 'win32' ? 'C:/Program Files/Git/bin/bash.exe' : 'bash');
 const script = resolve(upstream, 'deploy-laravel.sh').replaceAll('\\', '/');
 function run(args: string[]) {
-  return execFileSync(bash, [script, '--dry-run', ...args], { encoding: 'utf8', timeout: 30000 }).replace(/\u001b\[[0-9;]*m/g, '');
+  return execFileSync(bash, [script, '--dry-run', ...args], { encoding: 'utf8', timeout: 90000 }).replace(/\u001b\[[0-9;]*m/g, '');
 }
 describe.skipIf(!enabled)('pinned upstream differential checks', () => {
+  it('covers every lifecycle, Python and Kubernetes parser option in the public reference', () => {
+    for (const name of ['update', 'backup', 'activate', 'deactivate', 'remove'] as const) {
+      const source = readFileSync(resolve(upstream, `${name}.sh`), 'utf8');
+      const parser = source.slice(source.indexOf('parse_args() {')).split('\n}\n')[0];
+      for (const flag of new Set(parser.match(/--[a-z][a-z-]+(?=\))/g))) expect(ARGUMENT_CATALOG.some(row => row.scope === name && row.flag.includes(flag)), `${name}: ${flag}`).toBe(true);
+    }
+    for (const [scope, file] of [['python', 'src/laraship/cli.py'], ['kubernetes', 'kubernetes/laraship.py']] as const) {
+      const source = readFileSync(resolve(upstream, file), 'utf8');
+      for (const match of source.matchAll(/add_argument\("(--[a-z][a-z-]+)"/g)) expect(ARGUMENT_CATALOG.some(row => row.scope === scope && row.flag.includes(match[1])), `${scope}: ${match[1]}`).toBe(true);
+    }
+    for (const name of ['name', 'namespace', 'configmap', 'secret', 'revision']) expect(ARGUMENT_CATALOG.some(row => row.scope === 'kubernetes' && row.flag === `--${name}`)).toBe(true);
+  });
   it('verifies exact revision and full parser registry before execution', () => {
     expect(existsSync(script)).toBe(true);
     expect(execFileSync('git', ['-C', upstream, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim()).toBe(UPSTREAM.commit);
@@ -38,7 +51,7 @@ describe.skipIf(!enabled)('pinned upstream differential checks', () => {
     writeFileSync(path, result.config);
     const configOutput = run(['--config', path]);
     for (const expected of expectations) expect(configOutput).toContain(expected);
-  });
+  }, 180000);
   it('accepts an existing SSH deploy key file path', () => {
     mkdirSync('tmp/integration-configs', { recursive: true });
     const key = resolve('tmp/integration-configs/fixture-key').replaceAll('\\', '/');

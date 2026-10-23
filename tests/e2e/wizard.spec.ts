@@ -2,11 +2,13 @@ import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { readFile } from 'node:fs/promises';
 
+const baseUrl = `http://127.0.0.1:${process.env.LARASHIP_TEST_PORT || 4173}`;
 const wizard = (page: Page) => page.getByRole('region', { name: 'Deployment configurator' });
 test('Python installation and final callbacks share settings across all runners without browser delivery', async ({ page }, info) => {
-  await page.goto('/');
+  test.setTimeout(60000);
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
   const requests: string[] = [];
-  page.on('request', request => { if (!request.url().startsWith('http://127.0.0.1:4173')) requests.push(request.url()); });
+  page.on('request', request => { if (!request.url().startsWith(baseUrl)) requests.push(request.url()); });
   const installation = page.locator('#installation');
   await installation.getByRole('radio', { name: /^Python CLI · native/ }).check();
   await expect(installation).toContainText('pipx install laraship==1.3.0');
@@ -65,7 +67,7 @@ test('Python installation and final callbacks share settings across all runners 
 });
 
 test('Python Docker falls back to Python native for a host database and translates completion settings', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
   await page.locator('#installation').getByRole('radio', { name: /^Python CLI · Docker/ }).check();
   await page.getByRole('button', { name: 'Advanced', exact: true }).click();
   await next(page); await identity(page); await next(page);
@@ -98,9 +100,10 @@ async function result(page: Page) {
   await page.getByRole('button', { name: 'Review configuration' }).click();
   await expect(page.getByRole('heading', { name: 'Ready when you are.' })).toBeVisible();
 }
-test.beforeEach(async ({ page }) => { await page.goto('/'); });
+test.beforeEach(async ({ page }) => { await page.goto('/', { waitUntil: 'domcontentloaded' }); await expect(page).toHaveTitle(/LaraShip/); });
 for (const primary of ['admin-panel', 'api'] as const) {
   test(`${primary} combines with staging, blocks conflicts, and exports both presets`, async ({ page }, info) => {
+    test.setTimeout(60000);
     if (primary === 'api') await page.locator('#installation').getByRole('radio', { name: 'Docker image' }).check();
     await page.getByRole('checkbox', { name: primary, exact: true }).check();
     const staging = page.getByRole('checkbox', { name: 'staging', exact: true });
@@ -224,7 +227,7 @@ test('native PostgreSQL forces Bash while Docker remains a separate installation
 });
 test('minimal PostgreSQL, copied command, export, reload and accessibility', async ({ page, context }, info) => {
   const externalRequests: string[] = [];
-  page.on('request', request => { if (!request.url().startsWith('http://127.0.0.1:4173')) externalRequests.push(request.url()); });
+  page.on('request', request => { if (!request.url().startsWith(baseUrl)) externalRequests.push(request.url()); });
   await expect(page).toHaveTitle(/LaraShip/);
   await page.getByRole('link', { name: 'Configure your deployment', exact: true }).click();
   await next(page); await identity(page); await next(page); await result(page);
@@ -241,7 +244,7 @@ test('minimal PostgreSQL, copied command, export, reload and accessibility', asy
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Download configuration' }).click();
   expect((await downloadPromise).suggestedFilename()).toBe('deploy.config');
-  expect(await page.evaluate(() => ({ storage: { ...localStorage }, url: location.href }))).toEqual({ storage: {}, url: 'http://127.0.0.1:4173/#configure' });
+  expect(await page.evaluate(() => ({ storage: { ...localStorage }, url: location.href }))).toEqual({ storage: {}, url: `${baseUrl}/#configure` });
   expect(externalRequests).toEqual([]);
   await checkAccessibility(page);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

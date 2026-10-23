@@ -4,6 +4,11 @@ export function scenario(overrides: Partial<WizardConfig> = {}): WizardConfig {
   return { ...structuredClone(initialConfig), slug: 'testapp', domain: 'app.example.com', sslEmail: 'operator@example.com', ...overrides };
 }
 export const scenarios: [string, Partial<WizardConfig>, string[]][] = [
+  ['custom PostgreSQL and Redis password templates', { customSecrets: ['db-postgres-password', 'redis-password'] }, ['Nothing was changed.']],
+  ['custom MySQL container password templates', { dbType: 'mysql', customSecrets: ['db-mysql-password', 'db-mysql-root-password'] }, ['Nothing was changed.']],
+  ['custom Filament and Basic Auth templates', { modules: ['filament'], filamentEmail: 'admin@example.com', basicAuth: true, customSecrets: ['filament-password', 'auth-password'] }, ['Nothing was changed.']],
+  ['explicit HTTP legacy and final endpoints', { endpoint: 'http://api.example.com/legacy', endpointConsent: true, completionEnabled: true, completionEndpoint: 'http://api.example.com/final', completionEndpointConsent: true, allowInsecureEndpoint: true, insecureEndpointConsent: true }, ['Completion:   configured (not executed during dry run)']],
+  ['custom supported Laravel constraint', { laravelVersion: '13.1' }, ['Source:       fresh Laravel ^13.1']],
   ['completion API without passwords', { completionEnabled: true, completionEndpoint: 'https://api.example.com/deployments/completed', completionEndpointConsent: true }, ['Completion:   configured (not executed during dry run)']],
   ['completion API explicit passwords and timeout', { completionEnabled: true, completionEndpoint: 'https://api.example.com/deployments/completed', completionEndpointConsent: true, completionIncludeSecrets: true, completionTimeout: '45' }, ['Completion:   configured (not executed during dry run)']],
   ['minimal PostgreSQL Docker', {}, ['Database:     postgres, in a container', 'Modules:      none', 'Source:       fresh Laravel ^13.0']],

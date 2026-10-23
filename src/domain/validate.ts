@@ -2,15 +2,22 @@ import { effectiveConfig, presetDefaults } from './constraints';
 import { PRESET_NAMES } from '../data/upstream';
 import type { Issue, WizardConfig } from './wizardSchema';
 import type { Runner } from './runner';
+import { SECRET_OPTIONS } from './secrets';
+import { validSlug } from './validationPrimitives';
+import { absolutePath, shadows, defaultExecution, type ExecutionSettings } from './execution';
 
 export const isSshRepo = (repo: string) => /^ssh:\/\//.test(repo) || /^[A-Za-z0-9._-]+@[A-Za-z0-9.-]+:.+/.test(repo);
 export const isEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-export function validRepo(repo: string): boolean {
+export function localRepoPath(repo: string): string {
+  try { const url = new URL(repo); return url.protocol === 'file:' ? decodeURIComponent(url.pathname) : ''; } catch { return ''; }
+}
+export function validRepo(repo: string, additionalTransports = false): boolean {
   if (/[\s\x00-\x1f\x7f?#]/.test(repo)) return false;
   if (/^[A-Za-z0-9._-]+@[A-Za-z0-9.-]+:[A-Za-z0-9_./-]+$/.test(repo)) return true;
   try {
     const url = new URL(repo);
-    return ['https:', 'ssh:'].includes(url.protocol) && !!url.hostname && url.pathname.length > 1 &&
+    if (url.protocol === 'file:') return additionalTransports && ['', 'localhost'].includes(url.hostname) && !url.username && !url.password && absolutePath(localRepoPath(repo));
+    return ['https:', 'ssh:', ...(additionalTransports ? ['http:', 'git:'] : [])].includes(url.protocol) && !!url.hostname && url.pathname.length > 1 &&
       !url.password && (url.protocol === 'ssh:' || !url.username);
   } catch { return false; }
 }
@@ -18,6 +25,8 @@ export function validate(config: WizardConfig): Issue[] {
   const e = effectiveConfig(config);
   const issues: Issue[] = [];
   const add = (field: string, code: string, message: string, step: number) => issues.push({ field, code, message, step });
+  if (config.source === 'new' && (!/^\d+\.\d+$/.test(config.laravelVersion) || +config.laravelVersion.split('.')[0] < 12)) add('laravelVersion', 'laravel-version', 'Use Laravel X.Y, version 12.0 or newer. Availability and application compatibility must be checked separately.', 0);
+  if (config.customSecrets.some(key => !SECRET_OPTIONS.some(option => option.key === key))) add('customSecrets', 'secret-option', 'Choose only supported server-side password templates.', 4);
   if (config.presets.some(preset => !PRESET_NAMES.includes(preset))) add('presets', 'presets', 'Choose only the available presets.', 0);
   const presetModules = presetDefaults(config.presets).modules;
   if (presetModules.includes('queue') && presetModules.includes('horizon')) add('presets', 'preset-conflict', 'admin-panel and api cannot be combined: Queue worker conflicts with Horizon.', 0);
@@ -34,10 +43,10 @@ export function validate(config: WizardConfig): Issue[] {
     // Upstream scans all argv for these actions before interpreting value positions.
     if (['--help', '-h', '--version', '-V', '--list-modules', '--list-presets', '--dry-run', '--config', '--preset'].includes(value)) add(field, 'reserved-action', 'This value is a reserved CLI action. Choose another value.', step);
   }
-  if (e.source === 'existing' && !validRepo(e.repo)) add('repo', 'repo', 'Enter an HTTPS or SSH repository URL without embedded credentials, query or fragment.', 0);
+  if (e.source === 'existing' && !validRepo(e.repo, e.additionalRepoTransports)) add('repo', 'repo', 'Enter a supported repository URL without embedded credentials, query or fragment. HTTP/git/file require the advanced transport opt-in.', 0);
   if (e.source === 'existing' && e.branch && !/^[A-Za-z0-9][A-Za-z0-9._/-]*$/.test(e.branch)) add('branch', 'branch', 'Start with a letter or digit; use letters, digits, dots, underscores, slashes or hyphens.', 0);
   if (e.source === 'existing' && e.deployKey && (!isSshRepo(e.repo) || !/^\/(?!\/)[^\x00-\x1f\x7f]+$/.test(e.deployKey))) add('deployKey', 'deploy-key', 'Use an absolute server path and an SSH repository URL.', 0);
-  if (!/^[A-Za-z0-9][A-Za-z0-9_-]*$/.test(e.slug) || e.slug.toLowerCase() === 'nginxproxy') add('slug', 'slug', 'Start with a letter or digit; use letters, digits, _ or -. nginxproxy is reserved.', 1);
+  if (!validSlug(e.slug)) add('slug', 'slug', 'Start with a letter or digit; use letters, digits, _ or -. nginxproxy is reserved.', 1);
   const labels = e.domain.split('.');
   if (e.domain.length > 253 || labels.length < 2 || labels.some(label => !/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/.test(label)) || /^\d+(\.\d+){3}$/.test(e.domain)) add('domain', 'domain', 'Enter a DNS hostname such as app.example.com, without a protocol, path or port.', 1);
   if (e.https && !isEmail(e.sslEmail)) add('sslEmail', 'email', 'Enter a valid certificate contact email.', 1);
@@ -66,7 +75,7 @@ export function validate(config: WizardConfig): Issue[] {
   if (e.endpoint) {
     try {
       const url = new URL(e.endpoint);
-      if (!/^https:\/\//.test(e.endpoint) || url.protocol !== 'https:' || !url.hostname || url.username || url.password || /[\s\\]/.test(e.endpoint)) throw new Error();
+      if (!(e.allowInsecureEndpoint ? /^https?:\/\// : /^https:\/\//).test(e.endpoint) || !['https:', ...(e.allowInsecureEndpoint ? ['http:'] : [])].includes(url.protocol) || !url.hostname || url.username || url.password || url.port === '0' || /[\s\\]/.test(e.endpoint)) throw new Error();
     } catch { add('endpoint', 'endpoint', 'Use an absolute HTTPS URL without credentials or whitespace.', 4); }
     if (!e.endpointConsent) add('endpointConsent', 'endpoint-consent', 'Acknowledge that the deployer sends project credentials to this endpoint.', 4);
   }
@@ -80,19 +89,26 @@ export function validate(config: WizardConfig): Issue[] {
     if (e.completionEndpoint) {
       try {
         const url = new URL(e.completionEndpoint);
-        if (!/^https:\/\//.test(e.completionEndpoint) || url.protocol !== 'https:' || !url.hostname || url.username || url.password || url.port === '0' || /[\s\\]/.test(e.completionEndpoint)) throw new Error();
+        if (!(e.allowInsecureEndpoint ? /^https?:\/\// : /^https:\/\//).test(e.completionEndpoint) || !['https:', ...(e.allowInsecureEndpoint ? ['http:'] : [])].includes(url.protocol) || !url.hostname || url.username || url.password || url.port === '0' || /[\s\\]/.test(e.completionEndpoint)) throw new Error();
       } catch { add('completionEndpoint', 'endpoint', 'Use an absolute HTTPS URL without credentials or whitespace.', 4); }
       if (!e.completionEndpointConsent) add('completionEndpointConsent', 'completion-endpoint-consent', 'Acknowledge sending the final deployment report to this API.', 4);
     }
     if (e.completionTokenFile && !e.completionEndpoint) add('completionTokenFile', 'completion-token', 'A token file requires a completion endpoint. Enter only its server path, never the token.', 4);
     if (!/^[0-9]+$/.test(e.completionTimeout) || +e.completionTimeout < 1 || +e.completionTimeout > 300) add('completionTimeout', 'completion-timeout', 'Choose a whole timeout from 1 to 300 seconds.', 4);
   }
+  if (e.allowInsecureEndpoint && !e.insecureEndpointConsent) add('insecureEndpointConsent', 'insecure-consent', 'Acknowledge that allowing HTTP applies to both endpoint features and may transmit credentials without encryption.', 4);
   return issues;
 }
 
-export function validateRunner(config: WizardConfig, runner: Runner): Issue[] {
+export function validateRunner(config: WizardConfig, runner: Runner, settings: ExecutionSettings = defaultExecution): Issue[] {
+  const local = config.source === 'existing' ? localRepoPath(config.repo) : '';
+  if (runner === 'docker' || runner === 'python-docker') {
+    const inputs = [['repo', local, 0], ['deployKey', config.source === 'existing' ? config.deployKey : '', 0], ['onComplete', config.completionEnabled ? config.onComplete : '', 4], ['completionTokenFile', config.completionEnabled ? config.completionTokenFile : '', 4]] as const;
+    const overlaps = inputs.filter(([, input]) => input && ['/var/www', '/run/lock/laraship', '/var/run/docker.sock', '/opt/laraship', '/usr', '/bin', '/etc', settings.archiveDir].some(path => shadows(input, path)));
+    if (overlaps.length) return overlaps.map(([field, , step]) => ({ field, step, code: 'repo-mount', message: 'Read-only server inputs must not hide server, archive, system or toolkit paths.' }));
+  }
   if (runner !== 'python-docker') return [];
-  return ([['deployKey', config.source === 'existing' ? config.deployKey : '', 0],
+  return ([['deployKey', config.source === 'existing' ? config.deployKey : '', 0], ['repo', local, 0],
     ['onComplete', config.completionEnabled ? config.onComplete : '', 4],
     ['completionTokenFile', config.completionEnabled ? config.completionTokenFile : '', 4]] as const)
     .filter(([, path]) => /[,"\r\n]/.test(path) || path.split('/').includes('..'))

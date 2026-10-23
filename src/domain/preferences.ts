@@ -17,7 +17,7 @@ export function readPreferences(raw: string | null): WizardConfig {
     if (!data || typeof data !== 'object') return result;
     const p = data as Record<string, unknown>;
     if (p.source === 'new' || p.source === 'existing') result.source = p.source;
-    if (p.laravelVersion === '13.0' || p.laravelVersion === '12.0') result.laravelVersion = p.laravelVersion;
+    if (typeof p.laravelVersion === 'string' && /^[0-9]{1,4}\.[0-9]{1,3}$/.test(p.laravelVersion) && +p.laravelVersion.split('.')[0] >= 12) result.laravelVersion = p.laravelVersion;
     if (p.dbType === 'postgres' || p.dbType === 'mysql') result.dbType = p.dbType;
     if (p.dbLocation === 'docker' || p.dbLocation === 'native') result.dbLocation = p.dbLocation;
     if (Array.isArray(p.modules)) result.modules = MODULES.filter(module => (p.modules as unknown[]).includes(module));

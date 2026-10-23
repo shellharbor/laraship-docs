@@ -1,6 +1,6 @@
 # Verification report
 
-Local verification: 2026-10-22, Windows, Node.js 24.17.0/npm 11.13.0, Git Bash, Chromium 156 through Playwright 1.64.1. Optional Docker checks used Docker Desktop 4.96.2, client/daemon 29.9.2 and context desktop-linux (Linux amd64 daemon). Public fixture identities and domains are synthetic. No real passwords or infrastructure credentials were used. The 1.3.0 compatibility enhancement checks below are local; they do not establish publication of these changes.
+Local verification: 2026-10-23, Windows, Node.js 24.17.0/npm 11.13.0, Git Bash, Chromium 156 through Playwright 1.64.1. Optional Docker checks used client/daemon 29.9.2 and context desktop-linux (Linux amd64 daemon); Docker Desktop 4.96.2 was previously verified. Public fixture identities and domains are synthetic. No real passwords or infrastructure credentials were used. The complete-argument enhancement checks below are local; they do not establish publication of these changes.
 
 ## Checks
 
@@ -8,13 +8,13 @@ Local verification: 2026-10-22, Windows, Node.js 24.17.0/npm 11.13.0, Git Bash, 
 | --- | --- |
 | Strict TypeScript and production Vite build | Passed; static dist/, no backend or Docker runtime |
 | ESLint | Passed |
-| Vitest unit tests | 183 passed; 28 Bash and 26 Docker integrations deliberately skipped in the ordinary command |
-| Pinned upstream checks | 28 passed: parser registry, --help, 21 scenarios as argv and config, SSH key-path existence, 5 real Bash quoting/config round trips |
-| Published Docker CLI checks | 26 passed: OCI version/revision/platform, version/help, 19 container-DB scenarios as argv/config, quoted readonly key path, 21 audited file hashes and 4 completion/Python runner checks |
-| Browser/axe | 28 passed (14 desktop + 14 mobile) in the complete final rerun; zero axe violations in checked states |
+| Vitest unit tests | 236 passed; 34 Bash and 42 Docker integrations deliberately skipped in the ordinary command |
+| Pinned upstream checks | 34 passed: all namespace parser/reference coverage, deploy registry/help, 26 scenarios as argv/config, SSH key-path existence and 5 real Bash quoting/config round trips |
+| Published Docker CLI checks | 42 passed: OCI identity, deployment/config scenarios, 26 audited file hashes, Python/completion previews, 8 extracted lifecycle parser cases, 2 offline Kubernetes renders and generated Compose validation |
+| Browser/axe | All 36 cases covered: full run passed 34; both reference cases then passed on a focused desktop/mobile rerun after harness fixes. Zero axe violations in checked states |
 | Production project Pages path | Passed for /fixture-repo/: asset responses, direct opening, refresh, desktop/mobile overflow, canonical, robots/sitemap and .nojekyll |
-| npm audit --audit-level=low | Passed again before the multiple-preset release: 0 reported vulnerabilities, including development dependencies; dependencies are unchanged |
-| Visual inspection | Desktop/mobile completion and preset screenshots inspected; all four runner commands, readable conflict reasons and expanded final results are covered. No horizontal page overflow |
+| npm audit --audit-level=low | Release preflight on 2026-10-23: 0 reported vulnerabilities, including development dependencies; dependency lockfile unchanged |
+| Visual inspection | Desktop/mobile argument-enhancement Kubernetes screenshots inspected, plus previous completion/preset coverage. Checked states have no horizontal page overflow |
 
 The browser suite covers minimal PostgreSQL, native MySQL template handling, presets, source transitions, existing-repo credential rejection, Horizon/Redis dependencies, custom port conflicts, endpoint consent, clipboard, config download, opt-in storage, Clear data, keyboard focus and English/Russian UI. Added journeys exercise the visible installation guide, image setup, shared runner selection, Docker preview/deploy/management/config, config download and native PostgreSQL fallback. Unit tests also reject native MySQL with Docker. Axe checks landing/wizard and final results on both viewport classes. Automated axe checks do not establish complete WCAG conformance or replace assistive-technology testing.
 
@@ -30,9 +30,9 @@ Image impact: this static site has no Docker build. Upstream Dockerfile, entrypo
 
 ## Python and completion verification
 
-Unit tests cover all existing deployment settings through Python native, argument forwarding through --, immutable Docker image selection, management commands (including readonly SSH keys on updates), native DB fallback and Python Docker mount-path limitations. Completion tests exercise target requirements, independent legacy options, default password omission/explicit inclusion, timeout boundaries, consent, HTTPS-only URLs, absolute file paths, disabled settings and storage exclusion.
+Unit tests cover all existing deployment settings through Python native, argument forwarding through --, immutable Docker image selection, management commands (including readonly SSH keys on updates), native DB fallback and Python Docker mount-path limitations. Completion tests exercise target requirements, independent legacy options, default password omission/explicit inclusion, timeout boundaries, consent, HTTPS defaults with acknowledged HTTP opt-in, absolute file paths, disabled settings and storage exclusion.
 
-The 21 shared scenarios add two final API dry-runs, with passwords omitted or explicitly included and a custom timeout. Source and image both accept argv and config without contacting that API. Four additional offline image checks parse the exact generated Bash, Docker, Python native and Python Docker preview commands. Root-owned private synthetic hooks/token files are created only inside disposable containers. Sentinel assertions prove dry-run does not execute the hook; network is disabled. Python source is mounted read-only from the audited fixture. The nested Docker executable is stubbed to inspect the adapter arguments and forward only to the packaged dry-run; it verifies network none, read-only inspection and explicit input mounts without server socket access. These are adapter/engine parsing checks, not a real Docker server deployment.
+The earlier 21 shared scenarios included two final API dry-runs, with passwords omitted or explicitly included and a custom timeout. Source and image both accept argv and config without contacting that API. Four additional offline image checks parse the exact generated Bash, Docker, Python native and Python Docker preview commands. Root-owned private synthetic hooks/token files are created only inside disposable containers. Sentinel assertions prove dry-run does not execute the hook; network is disabled. Python source is mounted read-only from the audited fixture. The nested Docker executable is stubbed to inspect the adapter arguments and forward only to the packaged dry-run; it verifies network none, read-only inspection and explicit input mounts without server socket access. These are adapter/engine parsing checks, not a real Docker server deployment.
 
 The published PyPI wheel SHA-256 was verified and its four adapter files matched source. The unpacked wheel returned laraship 1.3.0 inside an offline container. No fresh pip/pipx install or real release-download installation was performed on an Ubuntu host. Source/image, package metadata, requirements and installation examples were reviewed against the pinned upstream Python documentation.
 
@@ -59,6 +59,13 @@ New browser journeys cover Python pipx/venv instructions, native/Docker selectio
 17. API plus staging selected in reverse order, with stable output, Horizon/Redis, Basic Auth and PHP 16M.
 18. API plus staging with explicit PHP 256M and additive backup module.
 19. Existing HTTPS repository with the compatible staging preset.
+20. Final API completion with passwords omitted.
+21. Final API completion with explicit password inclusion and custom timeout.
+22. PostgreSQL and Redis custom-password templates.
+23. MySQL app and container-root password templates.
+24. Filament and Basic Auth password templates.
+25. Explicit HTTP opt-in for both legacy and completion APIs.
+26. Custom Laravel X.Y constraint (parser acceptance only).
 
 Additional checks verify an existing local SSH key file path and literal apostrophes, dollar signs, semicolons, spaces, double quotes and backslashes as single Bash arguments. Upstream config parsing is also exercised. No hook is executed: the CLI exits at dry-run.
 
@@ -73,6 +80,20 @@ Browser journeys cover both compatible pairs through generated Bash/Docker comma
 Self-review covered emitted flags, preset precedence, stale source-specific values, native DB meaning/fallback, reserved/duplicate ports, shell/config/CSV quoting, Docker access and readonly file mounts, image identity, URL credential rejection, pre-parser reserved action values, secret templates, persistence allowlist and deployment permissions. No independent reviewer was used because delegation was not authorized. No full deployment was attempted. Socket/host-network preflight and actual provisioning on a Linux server remain unverified.
 
 GitHub Actions dependencies are pinned to exact official revision SHAs resolved during implementation.
+
+## Complete-argument verification (2026-10-23)
+
+The [coverage map](argument-coverage.md) records all 102 public entries and their UI locations. Five added shared scenarios exercise applicable password templates, both HTTP endpoint features with consent, and a syntactically valid custom Laravel constraint. No tested constraint establishes release availability. Unit coverage includes custom execution paths/env/argv, readonly archive-overlap prevention, placeholder substitution at actual flag positions, excluded browser storage, independent lifecycle namespaces and Kubernetes requirements.
+
+Eight lifecycle image checks extract only the audited script's parse_args function, initialize a synthetic /tmp project/dump fixture and inspect parsed values. They never source a complete management script or call its main/operation function. Kubernetes tests render actual JSON with/without a worker using a non-root read-only offline container; generated Compose is parsed with docker compose config only. No update, restore, activation, removal, migration, cluster rollout or real hook/API delivery was performed.
+
+Initial browser checks detected another project's app on the default port, a reference assertion's letter case, insufficient hint contrast and Windows timing limits. LaraShip now has a dedicated local preview on 4175, configurable LARASHIP_TEST_PORT, DOM-ready navigation and a title guard; generated tmp/report/result/build directories are excluded from the Vite watcher so their HTML cannot trigger app reloads; other project servers were preserved. Contrast was corrected, and long multistep journeys have a bounded 60-second test limit. Source scenario processes have a bounded 90-second timeout and 180-second argv/config case limit for Git Bash. A reference audit now extracts only each parser, avoiding internal Docker flags. An initial Pages browser timeout passed on an isolated rerun. No product checks or consent assertions were removed.
+
+The last full 36-case browser run passed 34 cases; the two reference cases hit Windows navigation/scroll timing limits. After the DOM-ready/timeout/watcher fixes, their focused desktop/mobile rerun passed both, including source links, filtering, aliases, axe and overflow assertions (tmp/arguments-final-browser/.last-run.json). This was a focused rerun, not a claim that one final full command passed all 36. Tracing on Windows sometimes delays worker shutdown after assertions finish; a separate diagnostic rerun with tracing disabled also passed both cases without changing assertions. Browser evidence remains local and does not establish publication.
+
+Image impact was reassessed: no build inputs changed, no rebuild/pull was needed. After all 42 image checks, zero labeled test containers/volumes remained. This task created no volumes/build caches (owned storage 0 bytes); shared builder cache was inspected and preserved. Ignored storage receipts are in tmp/docker-audit/arguments-{storage,builder}.txt.
+
+Self-review covered all changed generators/forms, actual parser namespaces, shell/CSV/YAML quoting, optional argument applicability, custom paths/image trust, destructive intent, secret templates, export, preference exclusions and reset behavior. Independent delegation was not authorized. Fresh Ubuntu install/provisioning, custom administrative images, remote Git access, real database lifecycle operations and cluster deployment remain unverified.
 
 ## GitHub publication
 
@@ -92,6 +113,6 @@ Remaining release verification:
 - Real Ubuntu provisioning, Docker services, DNS/ACME, remote SSH/Git permissions and native DB connectivity are outside this static generator test scope.
 - The HTTPS endpoint adapter is checked by local validation and browser consent tests. No real endpoint or project credentials were contacted/sent.
 - Browser coverage uses Chromium with desktop/mobile viewport emulation; Safari, Firefox and screen-reader sessions remain unverified.
-- Secrets must be configured privately on the server. Insecure HTTP notification endpoints, browser password inputs and automatic slug generation are intentionally not offered. Multiple presets are allowed only when compatible with one another, the selected services and application source.
+- Secrets must be configured privately on the server. Browser password inputs and automatic slug generation are intentionally not offered. HTTP notification endpoints require explicit opt-in/acknowledgement and target trust. Multiple presets are allowed only when compatible with one another, the selected services and application source.
 
 Screenshots and traces are local ignored artifacts in test-results/; HTML browser report is in playwright-report/. The workflow uploads them as a CI artifact. Re-run commands and prerequisites are in README.md.
